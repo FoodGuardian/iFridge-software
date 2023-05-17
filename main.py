@@ -8,6 +8,8 @@ import imutils
 import time
 import cv2
 import threading
+import json
+import requests
 
 class Window(ctk.CTk):
     def __init__(self):
@@ -83,7 +85,22 @@ def scanproduct():
                 scanning = False
     #messagebox.showinfo("Productcode", barcodeData)
     vs.stop()
-    result.configure(text=barcodeData)
+    url = "https://world.openfoodfacts.org/api/v0/product/" + barcodeData + ".json"
+    response = requests.get(url).text
+    responseArray = json.loads(response)
+    print(responseArray)
+    print(responseArray['status'])
+    if responseArray['status'] == 1:
+        print("Product gevonden")
+        print(responseArray['product']['brands'])
+        print(responseArray['product']['product_name'])
+        text = barcodeData + " " + responseArray['product']['brands'] + " " + responseArray['product']['product_name']
+        result.configure(text=text)
+    else:
+        print("Product niet gevonden")
+        text = barcodeData + " product niet gevonden"
+        result.configure(text=text)
+
 
 def productlist():
     productlistwindow = Window()

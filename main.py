@@ -1,6 +1,5 @@
 import customtkinter as ctk
 import tkinter as tk
-from tkinter import messagebox
 from imutils.video import VideoStream
 from pyzbar import pyzbar
 import datetime
@@ -12,6 +11,7 @@ import json
 import requests
 from datetime import date, datetime, timedelta
 import mysql.connector
+from tkcalendar import *
 
 class Window(ctk.CTk):
     def __init__(self):
@@ -49,13 +49,14 @@ def productscan():
     global prodductscanwindow
     global amount
     global amountLabel
+    global cal
     amount = 1
     productscanwindow = Window()
 
     productscanwindow.columnconfigure((0, 4), weight=1, uniform="a")
     productscanwindow.columnconfigure((1, 2, 3), weight=2, uniform="a")
     productscanwindow.rowconfigure((0), weight=1, uniform="a")
-    productscanwindow.rowconfigure((1, 2, 3, 4), weight=2, uniform="a")
+    productscanwindow.rowconfigure((1, 2, 3, 4, 5), weight=2, uniform="a")
 
     backbutton = ctk.CTkButton(productscanwindow, text="Terug", command=lambda: productscanwindow.destroy())
     backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
@@ -67,7 +68,7 @@ def productscan():
     button1.grid(row=1, column=0, sticky="news", padx=20, pady=10, columnspan=2)
 
     button2 = ctk.CTkButton(productscanwindow, text="Voeg toe", font=("default", 24), command=lambda: threading.Thread(target=insertproduct).start())
-    button2.grid(row=4, column=3, sticky="es", padx=20, pady=10, columnspan=2)
+    button2.grid(row=5, column=3, sticky="es", padx=20, pady=10, columnspan=2)
 
     plusbutton = ctk.CTkButton(productscanwindow, text="+", font=("default", 24),command=lambda: threading.Thread(target=plusamount).start())
     plusbutton.grid(row=2, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
@@ -80,6 +81,9 @@ def productscan():
     # Amount goed krijgen
     amountLabel = ctk.CTkLabel(productscanwindow, text=amountText, font=("default", 22))
     amountLabel.grid(row=3, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
+
+    cal = Calendar(productscanwindow, selectmode="day", year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
+    cal.grid(row=2, column=2, sticky="nwes", padx=20, pady=10, columnspan=3, rowspan=3)
 
     result = ctk.CTkLabel(productscanwindow, text="Result: ", font=("default", 24))
     result.grid(row=1, column=3, sticky="new", padx=20, pady=10, columnspan=2)
@@ -137,6 +141,7 @@ def scanproduct():
 def insertproduct():
     global responseArray
     global amount
+    global cal
 
     if responseArray['status'] == 1:
         try:
@@ -150,7 +155,7 @@ def insertproduct():
             addItem = ("INSERT INTO Item"
                        "(Productcode, ExpirationDate, Amount)"
                        "VALUES (%s, %s, %s)")
-            expirationDate = date(2023, 6, 1)
+            expirationDate = cal.selection_get()
             itemData = (barcodeData, expirationDate, amount)
             cursor.execute(addItem, itemData)
             cnx.commit()

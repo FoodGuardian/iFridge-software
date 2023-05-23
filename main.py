@@ -10,6 +10,8 @@ import cv2
 import threading
 import json
 import requests
+from datetime import date, datetime, timedelta
+import mysql.connector
 
 class Window(ctk.CTk):
     def __init__(self):
@@ -44,32 +46,64 @@ def mainmenu():
 
 def productscan():
     global result
+    global prodductscanwindow
+    global amount
+    global amountLabel
+    amount = 1
     productscanwindow = Window()
 
-    productscanwindow.columnconfigure((0, 3), weight=1, uniform="a")
-    productscanwindow.columnconfigure((1, 2), weight=2, uniform="a")
+    productscanwindow.columnconfigure((0, 4), weight=1, uniform="a")
+    productscanwindow.columnconfigure((1, 2, 3), weight=2, uniform="a")
     productscanwindow.rowconfigure((0), weight=1, uniform="a")
-    productscanwindow.rowconfigure((1, 2), weight=2, uniform="a")
+    productscanwindow.rowconfigure((1, 2, 3, 4), weight=2, uniform="a")
 
     backbutton = ctk.CTkButton(productscanwindow, text="Terug", command=lambda: productscanwindow.destroy())
     backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
     scantitle = ctk.CTkLabel(productscanwindow, text="Product scannen", font=("default", 32))
-    scantitle.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+    scantitle.grid(row=0, column=1, columnspan=3, sticky="new", padx=20, pady=10)
 
     button1 = ctk.CTkButton(productscanwindow, text="Scan", font=("default", 24), command=lambda: threading.Thread(target=scanproduct).start())
     button1.grid(row=1, column=0, sticky="news", padx=20, pady=10, columnspan=2)
 
+    button2 = ctk.CTkButton(productscanwindow, text="Voeg toe", font=("default", 24), command=lambda: threading.Thread(target=insertproduct).start())
+    button2.grid(row=4, column=3, sticky="es", padx=20, pady=10, columnspan=2)
+
+    plusbutton = ctk.CTkButton(productscanwindow, text="+", font=("default", 24),command=lambda: threading.Thread(target=plusamount).start())
+    plusbutton.grid(row=2, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
+
+    minusbutton = ctk.CTkButton(productscanwindow, text="-", font=("default", 24),
+                               command=lambda: threading.Thread(target=minusamount).start())
+    minusbutton.grid(row=4, column=0, sticky="new", padx=20, pady=10, columnspan=2)
+
+    amountText = amount
+    # Amount goed krijgen
+    amountLabel = ctk.CTkLabel(productscanwindow, text=amountText, font=("default", 22))
+    amountLabel.grid(row=3, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
+
     result = ctk.CTkLabel(productscanwindow, text="Result: ", font=("default", 24))
-    result.grid(row=1, column=2, sticky="new", padx=20, pady=10, columnspan=2)
+    result.grid(row=1, column=3, sticky="new", padx=20, pady=10, columnspan=2)
 
     productscanwindow.mainloop()
-    #Lijkt er op dat de code na de mainloop niet uitgevoerd wordt
 
+def plusamount():
+    global amount
+    global amountLabel
+    amount += 1
+    amountLabel.configure(text=amount)
+
+def minusamount():
+    global amount
+    global amountLabel
+    if amount > 1:
+        amount -= 1
+        amountLabel.configure(text=amount)
 
 def scanproduct():
+    global productscanwindow
     global barcodeData
     global result
+    global responseArray
     vs = VideoStream(usePiCamera=True).start()
     time.sleep(2.0)
     scanning = True
@@ -79,12 +113,11 @@ def scanproduct():
         barcodes = pyzbar.decode(frame)
         for barcode in barcodes:
             barcodeData = barcode.data.decode("utf-8")
-            #barcodeType = barcode.type
             print(barcodeData)
             if(barcodeData != None):
                 scanning = False
-    #messagebox.showinfo("Productcode", barcodeData)
     vs.stop()
+    result.configure(text="Scanning...")
     url = "https://world.openfoodfacts.org/api/v0/product/" + barcodeData + ".json"
     response = requests.get(url).text
     responseArray = json.loads(response)
@@ -100,6 +133,33 @@ def scanproduct():
         print("Product niet gevonden")
         text = barcodeData + " product niet gevonden"
         result.configure(text=text)
+
+def insertproduct():
+    global responseArray
+    global amount
+
+    if responseArray['status'] == 1:
+        try:
+            cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+            cursor = cnx.cursor()
+            addProduct = ("INSERT IGNORE INTO Product"
+                           "(Productcode, Brand, Name)"
+                           "VALUES (%s, %s, %s)")
+            productData = (barcodeData, responseArray['product']['brands'], responseArray['product']['product_name'])
+            cursor.execute(addProduct, productData)
+            addItem = ("INSERT INTO Item"
+                       "(Productcode, ExpirationDate, Amount)"
+                       "VALUES (%s, %s, %s)")
+            expirationDate = date(2023, 6, 1)
+            itemData = (barcodeData, expirationDate, amount)
+            cursor.execute(addItem, itemData)
+            cnx.commit()
+            cursor.close()
+            cnx.close()
+            result.configure(text="Product toegevoegd")
+
+        except mysql.connector.Error as err:
+            print(err)
 
 
 def productlist():

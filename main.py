@@ -5,13 +5,16 @@ from pyzbar import pyzbar
 import datetime
 import imutils
 import time
-import cv2
 import threading
 import json
 import requests
 from datetime import date, datetime, timedelta
 import mysql.connector
 from tkcalendar import *
+import os
+
+if os.environ.get('DISPLAY','') == '':
+    os.environ.__setitem__('DISPLAY', ':0.0')
 
 class Window(ctk.CTk):
     def __init__(self):
@@ -86,7 +89,7 @@ def productscan():
     cal.grid(row=2, column=2, sticky="nwes", padx=20, pady=10, columnspan=3, rowspan=3)
 
     result = ctk.CTkLabel(productscanwindow, text="Result: ", font=("default", 24))
-    result.grid(row=1, column=3, sticky="new", padx=20, pady=10, columnspan=2)
+    result.grid(row=1, column=2, sticky="new", padx=20, pady=10, columnspan=3)
 
     productscanwindow.mainloop()
 
@@ -131,7 +134,7 @@ def scanproduct():
         print("Product gevonden")
         print(responseArray['product']['brands'])
         print(responseArray['product']['product_name'])
-        text = barcodeData + " " + responseArray['product']['brands'] + " " + responseArray['product']['product_name']
+        text = responseArray['product']['brands'] + " " + responseArray['product']['product_name']
         result.configure(text=text)
     else:
         print("Product niet gevonden")

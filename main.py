@@ -24,6 +24,62 @@ class Window(ctk.CTk):
         self.bind("<Escape>", quit)
 
 
+class ProductItem(ctk.CTkFrame):
+    def __init__(self, *args,
+                 width: int = 400,
+                 height: int = 100,
+                 title: str = "Title",
+                 **kwargs):
+        super().__init__(*args, width=width, height=height, **kwargs)
+
+        self.title = title
+
+        self.configure(fg_color=("gray78", "gray28"))
+
+        self.grid_columnconfigure((1,2), weight=4, uniform="a")
+        self.grid_columnconfigure((0,3), weight=1, uniform="a")
+        #self.grid_rowconfigure((0,1,2), weight=1, uniform="a")
+
+        self.title = ctk.CTkLabel(self, text=title, font=("default", 26))
+        self.title.grid(row=0, column=0, columnspan=2, sticky="w", padx=20, pady=10)
+
+        self.rowcounter = 1
+
+        #Loop die alle items als tuples uit de database haalt
+        test1 = item(self, 1, "30-5-2023", 2, self.rowcounter)
+        self.rowcounter += 1
+        test2 = item(self, 1, "30-5-2023", 2, self.rowcounter)
+
+
+class item():
+    def __init__(self, root, itemid, date, amount, rownumber):
+        self.root = root
+        self.id = itemid
+        self.date = date
+        self.amount = amount
+        self.rownumber = rownumber
+        self.button = ctk.CTkButton(root, text="-", command=lambda: self.minusamount())
+        self.button.grid(column=0, row=rownumber, padx=10)
+        self.label = ctk.CTkLabel(root, text=str(amount) + ": " + date)
+        self.label.grid(column=1, row=rownumber, sticky="w", padx=10, pady=10)
+
+    def minusamount(self):
+        if self.amount > 1:
+            #SQL update - 1
+            self.amount -= 1
+            self.label.configure(text=str(self.amount) + ": " + self.date)
+
+        else:
+            #SQL remove
+            self.selfdel()
+
+    def selfdel(self):
+        # Destroy label and button and make them invisible
+        del self.id
+        del self.date
+        del self.amount
+
+
 def mainmenu():
     global main
     main = Window()
@@ -58,7 +114,7 @@ def productscan():
 
     productscanwindow.columnconfigure((0, 4), weight=1, uniform="a")
     productscanwindow.columnconfigure((1, 2, 3), weight=2, uniform="a")
-    productscanwindow.rowconfigure((0), weight=1, uniform="a")
+    productscanwindow.rowconfigure(0, weight=1, uniform="a")
     productscanwindow.rowconfigure((1, 2, 3, 4, 5), weight=2, uniform="a")
 
     backbutton = ctk.CTkButton(productscanwindow, text="Terug", command=lambda: productscanwindow.destroy())
@@ -183,6 +239,22 @@ def productlist():
 
     listtitle = ctk.CTkLabel(productlistwindow, text="Productenlijst", font=("default", 32))
     listtitle.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+
+    product_frame = ctk.CTkScrollableFrame(master=productlistwindow)
+    product_frame.grid(column=0, columnspan=4, row=1, rowspan=2, sticky="nsew")
+
+    test = ProductItem(product_frame, title="test")
+    test.grid(row=1, pady=10, padx=30, sticky="nsew")
+
+    test2 = ProductItem(product_frame, title="test2")
+    test2.grid(row=2, pady=10, padx=30, sticky="nsew")
+
+    test3 = ProductItem(product_frame, title="test3")
+    test3.grid(row=3, pady=10, padx=30, sticky="nsew")
+
+    test4 = ProductItem(product_frame, title="test4")
+    test4.grid(row=4, pady=10, padx=30, sticky="nsew")
+    
 
     productlistwindow.mainloop()
 

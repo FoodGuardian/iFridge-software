@@ -243,6 +243,26 @@ def productlist():
     product_frame = ctk.CTkScrollableFrame(master=productlistwindow)
     product_frame.grid(column=0, columnspan=4, row=1, rowspan=2, sticky="nsew")
 
+    try:
+        cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+        cursor = cnx.cursor()
+        cursor.execute("SELECT * FROM Product")
+        resultproductlist = cursor.fetchall()
+        for product in resultproductlist:
+            print(product)
+            query = "SELECT * FROM Item WHERE Productcode=%s"
+            parameters = (product[0],)
+            cursor.execute(query, parameters)
+            itemresult = cursor.fetchall()
+            for item in itemresult:
+                print(item)
+
+            cursor.close()
+            cnx.close()
+    except mysql.connector.Error as err:
+        print(err)
+
+
     test = ProductItem(product_frame, title="test")
     test.grid(row=1, pady=10, padx=30, sticky="nsew")
 
@@ -254,7 +274,7 @@ def productlist():
 
     test4 = ProductItem(product_frame, title="test4")
     test4.grid(row=4, pady=10, padx=30, sticky="nsew")
-    
+
 
     productlistwindow.mainloop()
 

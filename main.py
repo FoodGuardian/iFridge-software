@@ -48,8 +48,6 @@ class ProductItem(ctk.CTkFrame):
 
         self.rowcounter = 1
 
-        #Loop die alle items als tuples uit de database haalt
-
         try:
             cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
             cursor = cnx.cursor()
@@ -59,7 +57,7 @@ class ProductItem(ctk.CTkFrame):
             itemresult = cursor.fetchall()
             for item in itemresult:
                 print(item)
-                self.items.append(Item(self, item[0], item[2], item[3], self.rowcounter))
+                self.items.append(Item(self, itemid=item[0], date=item[2], amount=item[3], rownumber=self.rowcounter))
                 self.rowcounter += 1
 
             cursor.close()
@@ -75,27 +73,35 @@ class Item():
         self.date = date
         self.amount = amount
         self.rownumber = rownumber
-        self.button = ctk.CTkButton(root, text="-", command=lambda: self.minusamount())
+        self.button = ctk.CTkButton(root, text="-", command=lambda: threading.Thread(target=self.minusamount).start())
         self.button.grid(column=0, row=rownumber, padx=10)
         self.label = ctk.CTkLabel(root, text=str(amount) + ": " + self.date.strftime("%d/%m/%Y"))
         self.label.grid(column=1, row=rownumber, sticky="w", padx=10, pady=10)
-
     def minusamount(self):
         if self.amount > 1:
             #SQL update - 1
             self.amount -= 1
             self.label.configure(text=str(self.amount) + ": " + self.date.strftime("%d/%m/%Y"))
-
         else:
-            #SQL remove
-            self.selfdel()
-
+            try:
+                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1',
+                                              database='ifridge')
+                cursor = cnx.cursor()
+                print("deleting: " + str(self.id))
+                cursor.execute("DELETE FROM Item WHERE ID=%s;", (str(self.id),))
+                cnx.commit()
+                cursor.close()
+                cnx.close()
+                self.label.destroy()
+                self.button.destroy()
+                self.selfdel()
+            except mysql.connector.Error as err:
+                print(err)
     def selfdel(self):
         # Destroy label and button and make them invisible
         del self.id
         del self.date
         del self.amount
-
 
 def mainmenu():
     global main

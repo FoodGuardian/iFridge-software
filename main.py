@@ -223,6 +223,7 @@ def scanproduct():
     vs = VideoStream(usePiCamera=True).start()
     time.sleep(2.0)
     scanning = True
+    result.configure(text="Scanning...")
     while scanning:
         frame = vs.read()
         frame = imutils.resize(frame, width=400)
@@ -233,7 +234,7 @@ def scanproduct():
             if(barcodeData != None):
                 scanning = False
     vs.stop()
-    result.configure(text="Scanning...")
+    result.configure(text="Product zoeken...")
     url = "https://world.openfoodfacts.org/api/v0/product/" + barcodeData + ".json"
     getresponse()
     responseArray = json.loads(response)

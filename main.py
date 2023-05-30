@@ -57,7 +57,6 @@ class ProductItem(ctk.CTkFrame):
             cursor.execute(query, parameters)
             itemresult = cursor.fetchall()
             for item in itemresult:
-                print(item)
                 self.items.append(Item(self, itemid=item[0], date=item[2], amount=item[3], rownumber=self.rowcounter))
                 self.rowcounter += 1
 
@@ -352,7 +351,6 @@ def productlist():
         cursor.close()
         cnx.close()
         for product in resultproductlist:
-            print(product)
             ProductItem(product_frame, title=product[1] + " " + product[2], productcode=product[0]).grid(row=ProductRowCount, pady=10, padx=30, sticky="nsew")
             ProductRowCount += 1
     except mysql.connector.Error as err:

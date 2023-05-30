@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import tkinter as tk
+import keyboard as keyboard
 from imutils.video import VideoStream
 from pyzbar import pyzbar
 import datetime
@@ -117,11 +118,14 @@ def mainmenu():
     button1 = ctk.CTkButton(main, text="Producten scannen", command=lambda: productscan(), font=("default", 24))
     button1.grid(row=1, column=0, sticky="news", padx=20, pady=10)
 
-    button2 = ctk.CTkButton(main, text="Productenlijst", font=("default", 24), command=lambda: productlist())
+    button2 = ctk.CTkButton(main, text="Handmatig toevoegen", command=lambda: addmanually(), font=("default", 24))
     button2.grid(row=1, column=1, sticky="news", padx=20, pady=10)
 
-    button1 = ctk.CTkButton(main, text="Instellingen", font=("default", 24), command=lambda: settings())
+    button1 = ctk.CTkButton(main, text="Productenlijst", font=("default", 24), command=lambda: productlist())
     button1.grid(row=2, column=0, sticky="news", padx=20, pady=10)
+
+    button2 = ctk.CTkButton(main, text="Instellingen", font=("default", 24), command=lambda: settings())
+    button2.grid(row=2, column=1, sticky="news", padx=20, pady=10)
 
     main.mainloop()
 
@@ -247,6 +251,39 @@ def insertproduct():
         except mysql.connector.Error as err:
             print(err)
 
+def addmanually():
+
+    def handle_click(event):
+        keyboard.open_keyboard()
+
+    addmanuallywindow = Window()
+
+    addmanuallywindow.columnconfigure((0, 3), weight=1, uniform="a")
+    addmanuallywindow.columnconfigure((1, 2), weight=2, uniform="a")
+    addmanuallywindow.rowconfigure((0), weight=1, uniform="a")
+    addmanuallywindow.rowconfigure((1, 2, 3, 4), weight=2, uniform="a")
+
+    backbutton = ctk.CTkButton(addmanuallywindow, text="Terug", command=lambda: addmanuallywindow.destroy())
+    backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+
+    manualtitle = ctk.CTkLabel(addmanuallywindow, text="Handmatig toevoegen", font=("default", 32))
+    manualtitle.grid(row=0, column=1, columnspan=1, sticky="new", padx=20, pady=10)
+
+    input_title = ctk.CTkLabel(addmanuallywindow, text="Product naam", font=("default", 32))
+    input_title.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+
+    user_input = ctk.CTkEntry(addmanuallywindow, corner_radius=20, width=200)
+    user_input.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+    user_input.bind("<1>", handle_click)
+
+    add_button = ctk.CTkButton(addmanuallywindow, text="Toevoegen")
+    add_button.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+
+    cal = Calendar(addmanuallywindow, selectmode="day", year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
+    cal.grid(row=2, column=2, sticky="nwes", padx=20, pady=10, columnspan=2, rowspan=2)
+
+    addmanuallywindow.mainloop()
 
 def productlist():
     productlistwindow = Window()

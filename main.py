@@ -218,6 +218,8 @@ def scanproduct():
     global barcodeData
     global result
     global responseArray
+    global response
+    global url
     vs = VideoStream(usePiCamera=True).start()
     time.sleep(2.0)
     scanning = True
@@ -233,7 +235,7 @@ def scanproduct():
     vs.stop()
     result.configure(text="Scanning...")
     url = "https://world.openfoodfacts.org/api/v0/product/" + barcodeData + ".json"
-    response = requests.get(url).text
+    getresponse()
     responseArray = json.loads(response)
     print(responseArray)
     print(responseArray['status'])
@@ -247,6 +249,20 @@ def scanproduct():
         print("Product niet gevonden")
         text = barcodeData + " product niet gevonden"
         result.configure(text=text)
+
+def getresponse():
+    global response
+    global url
+    trycountdown = 3
+    try:
+        response = requests.get(url).text
+    except:
+        trycountdown -= 1
+        if trycountdown > 0:
+            getresponse()
+        else:
+            result.configure(text="Geen verbinding")
+
 
 def insertproduct():
     global responseArray

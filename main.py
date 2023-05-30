@@ -48,6 +48,7 @@ class ProductItem(ctk.CTkFrame):
 
         self.rowcounter = 1
 
+
         try:
             cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
             cursor = cnx.cursor()
@@ -64,6 +65,21 @@ class ProductItem(ctk.CTkFrame):
             cnx.close()
         except mysql.connector.Error as err:
             print(err)
+
+    def CheckEmptyItems(self):
+        if len(self.items) == 0:
+            try:
+                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1',
+                                              database='ifridge')
+                cursor = cnx.cursor()
+                cursor.execute("DELETE FROM Product WHERE Productcode=%s;", (self.ProductCode,))
+                cnx.commit()
+                cursor.close()
+                cnx.close()
+                self.destroy()
+            except mysql.connector.Error as err:
+                print(err)
+
 
 
 class Item():
@@ -100,6 +116,8 @@ class Item():
                 cnx.commit()
                 cursor.close()
                 cnx.close()
+                self.root.items.remove(self)
+                self.root.CheckEmptyItems()
                 self.label.destroy()
                 self.button.destroy()
                 self.selfdel()

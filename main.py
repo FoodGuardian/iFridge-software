@@ -42,7 +42,6 @@ class ProductItem(ctk.CTkFrame):
 
         self.grid_columnconfigure((1,2), weight=4, uniform="a")
         self.grid_columnconfigure((0,3), weight=1, uniform="a")
-        #self.grid_rowconfigure((0,1,2), weight=1, uniform="a")
 
         self.title = ctk.CTkLabel(self, text=title, font=("default", 26))
         self.title.grid(row=0, column=0, columnspan=2, sticky="w", padx=20, pady=10)
@@ -80,15 +79,23 @@ class Item():
         self.label.grid(column=1, row=rownumber, sticky="w", padx=10, pady=10)
     def minusamount(self):
         if self.amount > 1:
-            #SQL update - 1
             self.amount -= 1
-            self.label.configure(text=str(self.amount) + ": " + self.date.strftime("%d/%m/%Y"))
+            try:
+                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1',
+                                              database='ifridge')
+                cursor = cnx.cursor()
+                cursor.execute("UPDATE Item SET amount = %s WHERE ID=%s;", (self.amount, str(self.id),))
+                cnx.commit()
+                cursor.close()
+                cnx.close()
+                self.label.configure(text=str(self.amount) + ": " + self.date.strftime("%d/%m/%Y"))
+            except mysql.connector.Error as err:
+                print(err)
         else:
             try:
                 cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1',
                                               database='ifridge')
                 cursor = cnx.cursor()
-                print("deleting: " + str(self.id))
                 cursor.execute("DELETE FROM Item WHERE ID=%s;", (str(self.id),))
                 cnx.commit()
                 cursor.close()

@@ -29,10 +29,13 @@ class ProductItem(ctk.CTkFrame):
                  width: int = 400,
                  height: int = 100,
                  title: str = "Title",
+                 productcode: int,
                  **kwargs):
         super().__init__(*args, width=width, height=height, **kwargs)
 
         self.title = title
+        self.ProductCode = productcode
+        self.items = []
 
         self.configure(fg_color=("gray78", "gray28"))
 
@@ -46,12 +49,26 @@ class ProductItem(ctk.CTkFrame):
         self.rowcounter = 1
 
         #Loop die alle items als tuples uit de database haalt
-        test1 = item(self, 1, "30-5-2023", 2, self.rowcounter)
-        self.rowcounter += 1
-        test2 = item(self, 1, "30-5-2023", 2, self.rowcounter)
+
+        try:
+            cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+            cursor = cnx.cursor()
+            query = "SELECT * FROM Item WHERE Productcode=%s"
+            parameters = (self.ProductCode,)
+            cursor.execute(query, parameters)
+            itemresult = cursor.fetchall()
+            for item in itemresult:
+                print(item)
+                self.items.append(Item(self, item[0], item[2], item[3], self.rowcounter))
+                self.rowcounter += 1
+
+            cursor.close()
+            cnx.close()
+        except mysql.connector.Error as err:
+            print(err)
 
 
-class item():
+class Item():
     def __init__(self, root, itemid, date, amount, rownumber):
         self.root = root
         self.id = itemid
@@ -60,14 +77,14 @@ class item():
         self.rownumber = rownumber
         self.button = ctk.CTkButton(root, text="-", command=lambda: self.minusamount())
         self.button.grid(column=0, row=rownumber, padx=10)
-        self.label = ctk.CTkLabel(root, text=str(amount) + ": " + date)
+        self.label = ctk.CTkLabel(root, text=str(amount) + ": " + self.date.strftime("%d/%m/%Y"))
         self.label.grid(column=1, row=rownumber, sticky="w", padx=10, pady=10)
 
     def minusamount(self):
         if self.amount > 1:
             #SQL update - 1
             self.amount -= 1
-            self.label.configure(text=str(self.amount) + ": " + self.date)
+            self.label.configure(text=str(self.amount) + ": " + self.date.strftime("%d/%m/%Y"))
 
         else:
             #SQL remove
@@ -137,7 +154,6 @@ def productscan():
     minusbutton.grid(row=4, column=0, sticky="new", padx=20, pady=10, columnspan=2)
 
     amountText = amount
-    # Amount goed krijgen
     amountLabel = ctk.CTkLabel(productscanwindow, text=amountText, font=("default", 22))
     amountLabel.grid(row=3, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
 
@@ -243,38 +259,20 @@ def productlist():
     product_frame = ctk.CTkScrollableFrame(master=productlistwindow)
     product_frame.grid(column=0, columnspan=4, row=1, rowspan=2, sticky="nsew")
 
+    ProductRowCount = 1
     try:
         cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
         cursor = cnx.cursor()
         cursor.execute("SELECT * FROM Product")
         resultproductlist = cursor.fetchall()
+        cursor.close()
+        cnx.close()
         for product in resultproductlist:
             print(product)
-            query = "SELECT * FROM Item WHERE Productcode=%s"
-            parameters = (product[0],)
-            cursor.execute(query, parameters)
-            itemresult = cursor.fetchall()
-            for item in itemresult:
-                print(item)
-
-            cursor.close()
-            cnx.close()
+            ProductItem(product_frame, title=product[1] + " " + product[2], productcode=product[0]).grid(row=ProductRowCount, pady=10, padx=30, sticky="nsew")
+            ProductRowCount += 1
     except mysql.connector.Error as err:
         print(err)
-
-
-    test = ProductItem(product_frame, title="test")
-    test.grid(row=1, pady=10, padx=30, sticky="nsew")
-
-    test2 = ProductItem(product_frame, title="test2")
-    test2.grid(row=2, pady=10, padx=30, sticky="nsew")
-
-    test3 = ProductItem(product_frame, title="test3")
-    test3.grid(row=3, pady=10, padx=30, sticky="nsew")
-
-    test4 = ProductItem(product_frame, title="test4")
-    test4.grid(row=4, pady=10, padx=30, sticky="nsew")
-
 
     productlistwindow.mainloop()
 

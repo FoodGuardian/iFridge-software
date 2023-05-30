@@ -52,7 +52,7 @@ class ProductItem(ctk.CTkFrame):
         try:
             cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
             cursor = cnx.cursor()
-            query = "SELECT * FROM Item WHERE Productcode=%s"
+            query = "SELECT * FROM Item WHERE Productcode=%s ORDER BY ExpirationDate"
             parameters = (self.ProductCode,)
             cursor.execute(query, parameters)
             itemresult = cursor.fetchall()

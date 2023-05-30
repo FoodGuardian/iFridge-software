@@ -10,10 +10,11 @@ import threading
 import json
 import requests
 from datetime import date, datetime, timedelta
-import mysql.connector
+# import mysql.connector
 from tkcalendar import *
 import os
 import subprocess
+from datetime import datetime
 
 if os.environ.get('DISPLAY','') == '':
     os.environ.__setitem__('DISPLAY', ':0.0')
@@ -265,25 +266,31 @@ def getresponse():
             result.configure(text="Geen verbinding")
 
 
-def insertproduct():
-    global responseArray
+def insertmanually():
+    global product_name
     global amount
     global cal
+    global result
 
-    if responseArray['status'] == 1:
+    today = datetime.now()
+    selected_date = cal.selection_get()
+    selected_datetime = datetime.combine(selected_date, datetime.min.time())
+    name = product_name.get()
+
+    if selected_datetime > today and name:
         try:
             cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
             cursor = cnx.cursor()
             addProduct = ("INSERT IGNORE INTO Product"
-                           "(Productcode, Brand, Name)"
-                           "VALUES (%s, %s, %s)")
-            productData = (barcodeData, responseArray['product']['brands'], responseArray['product']['product_name'])
+                           "(Productcode, Name)"
+                           "VALUES (%s, %s)")
+            productData = (name, name)
             cursor.execute(addProduct, productData)
             addItem = ("INSERT INTO Item"
                        "(Productcode, ExpirationDate, Amount)"
                        "VALUES (%s, %s, %s)")
             expirationDate = cal.selection_get()
-            itemData = (barcodeData, expirationDate, amount)
+            itemData = (name, expirationDate, amount)
             cursor.execute(addItem, itemData)
             cnx.commit()
             cursor.close()
@@ -292,35 +299,8 @@ def insertproduct():
 
         except mysql.connector.Error as err:
             print(err)
-
-def insertmanually():
-    global product_name
-    global amount
-    global cal
-    global result
-
-    try:
-        cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
-        cursor = cnx.cursor()
-        addProduct = ("INSERT IGNORE INTO Product"
-                       "(Productcode, Name)"
-                       "VALUES (%s, %s)")
-        name = product_name.get()
-        productData = (name, name)
-        cursor.execute(addProduct, productData)
-        addItem = ("INSERT INTO Item"
-                   "(Productcode, ExpirationDate, Amount)"
-                   "VALUES (%s, %s, %s)")
-        expirationDate = cal.selection_get()
-        itemData = (name, expirationDate, amount)
-        cursor.execute(addItem, itemData)
-        cnx.commit()
-        cursor.close()
-        cnx.close()
-        result.configure(text="Product toegevoegd")
-
-    except mysql.connector.Error as err:
-        print(err)
+    else:
+        result.configure(text="Incorrecte gegevens!")
 
 def addmanually():
     global product_name
@@ -385,6 +365,34 @@ def addmanually():
     addmanuallywindow.bind("<Button-1>", lambda event: close_osk())
 
     addmanuallywindow.mainloop()
+
+def insertproduct():
+    global responseArray
+    global amount
+    global cal
+
+    if responseArray['status'] == 1:
+        try:
+            cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+            cursor = cnx.cursor()
+            addProduct = ("INSERT IGNORE INTO Product"
+                           "(Productcode, Brand, Name)"
+                           "VALUES (%s, %s, %s)")
+            productData = (barcodeData, responseArray['product']['brands'], responseArray['product']['product_name'])
+            cursor.execute(addProduct, productData)
+            addItem = ("INSERT INTO Item"
+                       "(Productcode, ExpirationDate, Amount)"
+                       "VALUES (%s, %s, %s)")
+            expirationDate = cal.selection_get()
+            itemData = (barcodeData, expirationDate, amount)
+            cursor.execute(addItem, itemData)
+            cnx.commit()
+            cursor.close()
+            cnx.close()
+            result.configure(text="Product toegevoegd")
+
+        except mysql.connector.Error as err:
+            print(err)
 
 def productlist():
     productlistwindow = Window()

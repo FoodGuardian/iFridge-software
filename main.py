@@ -10,7 +10,7 @@ import threading
 import json
 import requests
 from datetime import date, datetime, timedelta
-# import mysql.connector
+import mysql.connector
 from tkcalendar import *
 import os
 import subprocess
@@ -277,30 +277,33 @@ def insertmanually():
     selected_datetime = datetime.combine(selected_date, datetime.min.time())
     name = product_name.get()
 
-    if selected_datetime > today and name:
-        try:
-            cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
-            cursor = cnx.cursor()
-            addProduct = ("INSERT IGNORE INTO Product"
-                           "(Productcode, Name)"
-                           "VALUES (%s, %s)")
-            productData = (name, name)
-            cursor.execute(addProduct, productData)
-            addItem = ("INSERT INTO Item"
-                       "(Productcode, ExpirationDate, Amount)"
-                       "VALUES (%s, %s, %s)")
-            expirationDate = cal.selection_get()
-            itemData = (name, expirationDate, amount)
-            cursor.execute(addItem, itemData)
-            cnx.commit()
-            cursor.close()
-            cnx.close()
-            result.configure(text="Product toegevoegd")
+    if name:
+        if selected_datetime > today:
+            try:
+                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+                cursor = cnx.cursor()
+                addProduct = ("INSERT IGNORE INTO Product"
+                               "(Productcode, Name)"
+                               "VALUES (%s, %s)")
+                productData = (name, name)
+                cursor.execute(addProduct, productData)
+                addItem = ("INSERT INTO Item"
+                           "(Productcode, ExpirationDate, Amount)"
+                           "VALUES (%s, %s, %s)")
+                expirationDate = cal.selection_get()
+                itemData = (name, expirationDate, amount)
+                cursor.execute(addItem, itemData)
+                cnx.commit()
+                cursor.close()
+                cnx.close()
+                result.configure(text="Product toegevoegd")
 
-        except mysql.connector.Error as err:
-            print(err)
+            except mysql.connector.Error as err:
+                print(err)
+        else:
+            result.configure(text="Verkeerde datum!")
     else:
-        result.configure(text="Incorrecte gegevens!")
+        result.configure(text="Naam is leeg!")
 
 def addmanually():
     global product_name
@@ -322,45 +325,45 @@ def addmanually():
     addmanuallywindow = Window()
 
     addmanuallywindow.columnconfigure((0, 4), weight=1, uniform="a")
-    addmanuallywindow.columnconfigure((1, 2), weight=2, uniform="a")
+    addmanuallywindow.columnconfigure((1, 2, 3), weight=2, uniform="a")
     addmanuallywindow.rowconfigure((0), weight=1, uniform="a")
-    addmanuallywindow.rowconfigure((1, 2, 3, 4), weight=2, uniform="a")
+    addmanuallywindow.rowconfigure((1, 2, 3, 4, 5, 6), weight=2, uniform="a")
 
     backbutton = ctk.CTkButton(addmanuallywindow, text="Terug", command=lambda: addmanuallywindow.destroy())
     backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
     manualtitle = ctk.CTkLabel(addmanuallywindow, text="Handmatig toevoegen", font=("default", 32))
-    manualtitle.grid(row=0, column=1, columnspan=1, sticky="new", padx=20, pady=10)
+    manualtitle.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
 
     input_title = ctk.CTkLabel(addmanuallywindow, text="Product naam:", font=("default", 25))
-    input_title.grid(row=1, column=0, columnspan=1, padx=10, pady=10)
+    input_title.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
 
     product_name = ctk.CTkEntry(addmanuallywindow, corner_radius=20, width=350)
-    product_name.grid(row=1, column=1, columnspan=1, padx=25, pady=25)
+    product_name.grid(row=2, column=0, columnspan=2, padx=25, pady=25)
 
     product_name.bind("<1>", handle_click)
 
     plusbutton = ctk.CTkButton(addmanuallywindow, text="+", font=("default", 24),command=lambda: threading.Thread(target=plusamount).start())
-    plusbutton.grid(row=2, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
+    plusbutton.grid(row=4, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
 
     minusbutton = ctk.CTkButton(addmanuallywindow, text="-", font=("default", 24),command=lambda: threading.Thread(target=minusamount).start())
-    minusbutton.grid(row=4, column=0, sticky="new", padx=20, pady=10, columnspan=2)
+    minusbutton.grid(row=6, column=0, sticky="new", padx=20, pady=10, columnspan=2)
 
     amountText = amount
     amountLabel = ctk.CTkLabel(addmanuallywindow, text=amountText, font=("default", 22))
-    amountLabel.grid(row=3, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
+    amountLabel.grid(row=5, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
 
     cal_title = ctk.CTkLabel(addmanuallywindow, text="Datum:", font=("default", 25))
     cal_title.grid(row=1, column=2, columnspan=2, padx=10, pady=10)
 
     cal = Calendar(addmanuallywindow, selectmode="day", year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
-    cal.grid(row=2, column=2, sticky="nwes", padx=20, pady=10, columnspan=3, rowspan=2)
+    cal.grid(row=2, column=2, sticky="nwes", padx=20, pady=10, columnspan=3, rowspan=3)
 
     button2 = ctk.CTkButton(addmanuallywindow, text="Voeg toe", font=("default", 24), command=lambda: threading.Thread(target=insertmanually).start())
-    button2.grid(row=4, column=2, sticky="es", padx=20, pady=10, columnspan=2)
+    button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=2)
 
     result = ctk.CTkLabel(addmanuallywindow, text="Result: ", font=("default", 24))
-    result.grid(row=0, column=2, sticky="new", padx=20, pady=10, columnspan=3)
+    result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
 
     addmanuallywindow.bind("<Button-1>", lambda event: close_osk())
 

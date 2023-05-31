@@ -313,13 +313,14 @@ def addmanually():
     amount = 1
     global amountLabel
     openOsk = False
+    global addmanuallywindow
 
-    # def close_osk():
-    #     if openOsk:
-    #         subprocess.Popen("keyboard.sh")
+    def close_osk():
+        if openOsk:
+            subprocess.Popen("/home/user/Desktop/killkeyboard.sh")
 
     def handle_click(event):
-        p = subprocess.Popen("keyboard.sh")
+        p = subprocess.Popen("/home/user/Desktop/keyboard.sh")
         openOsk = True
 
     addmanuallywindow = Window()
@@ -329,7 +330,7 @@ def addmanually():
     addmanuallywindow.rowconfigure((0), weight=1, uniform="a")
     addmanuallywindow.rowconfigure((1, 2, 3, 4, 5, 6), weight=2, uniform="a")
 
-    backbutton = ctk.CTkButton(addmanuallywindow, text="Terug", command=lambda: addmanuallywindow.destroy())
+    backbutton = ctk.CTkButton(addmanuallywindow, text="Terug", command=lambda: closemanual())
     backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
     manualtitle = ctk.CTkLabel(addmanuallywindow, text="Handmatig toevoegen", font=("default", 32))
@@ -365,9 +366,13 @@ def addmanually():
     result = ctk.CTkLabel(addmanuallywindow, text="Result: ", font=("default", 24))
     result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
 
-    # addmanuallywindow.bind("<Button-1>", lambda event: close_osk())
-
     addmanuallywindow.mainloop()
+
+def closemanual():
+    global addmanuallywindow
+    subprocess.Popen("/home/user/Desktop/killkeyboard.sh")
+    addmanuallywindow.destroy()
+
 
 def insertproduct():
     global responseArray

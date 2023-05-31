@@ -314,12 +314,12 @@ def addmanually():
     global amountLabel
     openOsk = False
 
-    def close_osk():
-        if openOsk:
-            subprocess.Popen("terminate_osk.bat")
+    # def close_osk():
+    #     if openOsk:
+    #         subprocess.Popen("keyboard.sh")
 
     def handle_click(event):
-        p = subprocess.Popen("run_osk.bat")
+        p = subprocess.Popen("keyboard.sh")
         openOsk = True
 
     addmanuallywindow = Window()
@@ -365,7 +365,7 @@ def addmanually():
     result = ctk.CTkLabel(addmanuallywindow, text="Result: ", font=("default", 24))
     result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
 
-    addmanuallywindow.bind("<Button-1>", lambda event: close_osk())
+    # addmanuallywindow.bind("<Button-1>", lambda event: close_osk())
 
     addmanuallywindow.mainloop()
 

@@ -1,6 +1,5 @@
 import customtkinter as ctk
 import tkinter as tk
-import keyboard as keyboard
 from imutils.video import VideoStream
 from pyzbar import pyzbar
 import datetime

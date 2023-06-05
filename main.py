@@ -415,8 +415,21 @@ def productlist():
     listtitle = ctk.CTkLabel(productlistwindow, text="Productenlijst", font=("default", 32))
     listtitle.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
 
-    product_frame = ctk.CTkScrollableFrame(master=productlistwindow)
-    product_frame.grid(column=0, columnspan=4, row=1, rowspan=2, sticky="nsew")
+    main_frame = ctk.CTkFrame(master=productlistwindow)
+    main_frame.grid(column=0, columnspan=4, row=1, rowspan=2, sticky="nsew")
+
+    product_canvas = ctk.CTkCanvas(master=main_frame)
+    product_canvas.pack(side="left", fill="both", expand=1)
+
+    scrollbar = ctk.CTkScrollbar(main_frame, orientation="vertical", command=product_canvas.yview, width=45)
+    scrollbar.pack(side="right", fill="y")
+
+    product_canvas.configure(yscrollcommand=scrollbar.set)
+    product_canvas.bind('<Configure>', lambda e: product_canvas.configure(scrollregion=product_canvas.bbox("all")))
+
+    product_frame = ctk.CTkFrame(master=product_canvas)
+
+    product_canvas.create_window((0, 0), window=product_frame, anchor="nw")
 
     ProductRowCount = 1
     try:

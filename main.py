@@ -1,22 +1,21 @@
-import customtkinter as ctk
-import tkinter as tk
-from imutils.video import VideoStream
-from pyzbar import pyzbar
 import datetime
-import imutils
-import time
-import threading
 import json
-import requests
-from datetime import date, datetime, timedelta
-import mysql.connector
-from tkcalendar import *
 import os
 import subprocess
+import threading
+import time
 from datetime import datetime
+import customtkinter as ctk
+import imutils
+import mysql.connector
+import requests
+from imutils.video import VideoStream
+from pyzbar import pyzbar
+from tkcalendar import *
 
-if os.environ.get('DISPLAY','') == '':
+if os.environ.get('DISPLAY', '') == '':
     os.environ.__setitem__('DISPLAY', ':0.0')
+
 
 class Window(ctk.CTk):
     def __init__(self):
@@ -31,48 +30,47 @@ class ProductItem(ctk.CTkFrame):
                  width: int = 400,
                  height: int = 100,
                  title: str = "Title",
-                 productcode: int,
+                 product_code: int,
                  **kwargs):
         super().__init__(*args, width=width, height=height, **kwargs)
 
         self.title = title
-        self.ProductCode = productcode
+        self.product_code = product_code
         self.items = []
 
         self.configure(fg_color=("gray78", "gray28"))
 
-        self.grid_columnconfigure((1,2), weight=4, uniform="a")
-        self.grid_columnconfigure((0,3), weight=1, uniform="a")
+        self.grid_columnconfigure((1, 2), weight=4, uniform="a")
+        self.grid_columnconfigure((0, 3), weight=1, uniform="a")
 
         self.title = ctk.CTkLabel(self, text=title, font=("default", 26))
         self.title.grid(row=0, column=0, columnspan=2, sticky="w", padx=20, pady=10)
 
-        self.rowcounter = 1
-
+        self.row_counter = 1
 
         try:
             cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
             cursor = cnx.cursor()
             query = "SELECT * FROM Item WHERE Productcode=%s ORDER BY ExpirationDate"
-            parameters = (self.ProductCode,)
+            parameters = (self.product_code,)
             cursor.execute(query, parameters)
-            itemresult = cursor.fetchall()
-            for item in itemresult:
-                self.items.append(Item(self, itemid=item[0], date=item[2], amount=item[3], rownumber=self.rowcounter))
-                self.rowcounter += 1
+            item_result = cursor.fetchall()
+            for item in item_result:
+                self.items.append(Item(self, itemid=item[0], date=item[2], amount=item[3], row_number=self.row_counter))
+                self.row_counter += 1
 
             cursor.close()
             cnx.close()
         except mysql.connector.Error as err:
             print(err)
 
-    def CheckEmptyItems(self):
+    def check_empty_items(self):
         if len(self.items) == 0:
             try:
                 cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1',
                                               database='ifridge')
                 cursor = cnx.cursor()
-                cursor.execute("DELETE FROM Product WHERE Productcode=%s;", (self.ProductCode,))
+                cursor.execute("DELETE FROM Product WHERE Productcode=%s;", (self.product_code,))
                 cnx.commit()
                 cursor.close()
                 cnx.close()
@@ -81,19 +79,19 @@ class ProductItem(ctk.CTkFrame):
                 print(err)
 
 
-
 class Item():
-    def __init__(self, root, itemid, date, amount, rownumber):
+    def __init__(self, root, itemid, date, amount, row_number):
         self.root = root
         self.id = itemid
         self.date = date
         self.amount = amount
-        self.rownumber = rownumber
-        self.button = ctk.CTkButton(root, text="-", command=lambda: threading.Thread(target=self.minusamount).start())
-        self.button.grid(column=0, row=rownumber, padx=10)
+        self.row_number = row_number
+        self.button = ctk.CTkButton(root, text="-", command=lambda: threading.Thread(target=self.minus_amount).start())
+        self.button.grid(column=0, row=row_number, padx=10)
         self.label = ctk.CTkLabel(root, text=str(amount) + ": " + self.date.strftime("%d/%m/%Y"))
-        self.label.grid(column=1, row=rownumber, sticky="w", padx=10, pady=10)
-    def minusamount(self):
+        self.label.grid(column=1, row=row_number, sticky="w", padx=10, pady=10)
+
+    def minus_amount(self):
         if self.amount > 1:
             self.amount -= 1
             try:
@@ -117,19 +115,21 @@ class Item():
                 cursor.close()
                 cnx.close()
                 self.root.items.remove(self)
-                self.root.CheckEmptyItems()
+                self.root.check_empty_items()
                 self.label.destroy()
                 self.button.destroy()
-                self.selfdel()
+                self.self_del()
             except mysql.connector.Error as err:
                 print(err)
-    def selfdel(self):
+
+    def self_del(self):
         # Destroy label and button and make them invisible
         del self.id
         del self.date
         del self.amount
 
-def mainmenu():
+
+def main_menu():
     global main
     main = Window()
 
@@ -140,13 +140,13 @@ def mainmenu():
     title = ctk.CTkLabel(main, text="iFridge", font=("default", 32))
     title.grid(row=0, column=0, sticky="new", padx=20, pady=10, columnspan=2)
 
-    button1 = ctk.CTkButton(main, text="Producten scannen", command=lambda: productscan(), font=("default", 24))
+    button1 = ctk.CTkButton(main, text="Producten scannen", command=lambda: product_scan(), font=("default", 24))
     button1.grid(row=1, column=0, sticky="news", padx=20, pady=10)
 
-    button2 = ctk.CTkButton(main, text="Handmatig toevoegen", command=lambda: addmanually(), font=("default", 24))
+    button2 = ctk.CTkButton(main, text="Handmatig toevoegen", command=lambda: add_manually(), font=("default", 24))
     button2.grid(row=1, column=1, sticky="news", padx=20, pady=10)
 
-    button1 = ctk.CTkButton(main, text="Productenlijst", font=("default", 24), command=lambda: productlist())
+    button1 = ctk.CTkButton(main, text="Productenlijst", font=("default", 24), command=lambda: product_list())
     button1.grid(row=2, column=0, sticky="news", padx=20, pady=10)
 
     button2 = ctk.CTkButton(main, text="Instellingen", font=("default", 24), command=lambda: settings())
@@ -155,69 +155,76 @@ def mainmenu():
     main.mainloop()
 
 
-def productscan():
+def product_scan():
     global result
-    global prodductscanwindow
+    global product_scan_window
     global amount
-    global amountLabel
+    global amount_label
     global cal
     amount = 1
-    productscanwindow = Window()
+    product_scan_window = Window()
 
-    productscanwindow.columnconfigure((0, 4), weight=1, uniform="a")
-    productscanwindow.columnconfigure((1, 2, 3), weight=2, uniform="a")
-    productscanwindow.rowconfigure(0, weight=1, uniform="a")
-    productscanwindow.rowconfigure((1, 2, 3, 4, 5), weight=2, uniform="a")
+    product_scan_window.columnconfigure((0, 4), weight=1, uniform="a")
+    product_scan_window.columnconfigure((1, 2, 3), weight=2, uniform="a")
+    product_scan_window.rowconfigure(0, weight=1, uniform="a")
+    product_scan_window.rowconfigure((1, 2, 3, 4, 5), weight=2, uniform="a")
 
-    backbutton = ctk.CTkButton(productscanwindow, text="Terug", command=lambda: productscanwindow.destroy())
-    backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+    back_button = ctk.CTkButton(product_scan_window, text="Terug", command=lambda: product_scan_window.destroy())
+    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
-    scantitle = ctk.CTkLabel(productscanwindow, text="Product scannen", font=("default", 32))
-    scantitle.grid(row=0, column=1, columnspan=3, sticky="new", padx=20, pady=10)
+    scan_title = ctk.CTkLabel(product_scan_window, text="Product scannen", font=("default", 32))
+    scan_title.grid(row=0, column=1, columnspan=3, sticky="new", padx=20, pady=10)
 
-    button1 = ctk.CTkButton(productscanwindow, text="Scan", font=("default", 24), command=lambda: threading.Thread(target=scanproduct).start())
+    button1 = ctk.CTkButton(product_scan_window, text="Scan", font=("default", 24),
+                            command=lambda: threading.Thread(target=scan_product).start())
     button1.grid(row=1, column=0, sticky="news", padx=20, pady=10, columnspan=2)
 
-    button2 = ctk.CTkButton(productscanwindow, text="Voeg toe", font=("default", 24), command=lambda: threading.Thread(target=insertproduct).start())
+    button2 = ctk.CTkButton(product_scan_window, text="Voeg toe", font=("default", 24),
+                            command=lambda: threading.Thread(target=insert_product).start())
     button2.grid(row=5, column=3, sticky="es", padx=20, pady=10, columnspan=2)
 
-    plusbutton = ctk.CTkButton(productscanwindow, text="+", font=("default", 24),command=lambda: threading.Thread(target=plusamount).start())
-    plusbutton.grid(row=2, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
+    plus_button = ctk.CTkButton(product_scan_window, text="+", font=("default", 24),
+                                command=lambda: threading.Thread(target=plus_amount).start())
+    plus_button.grid(row=2, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
 
-    minusbutton = ctk.CTkButton(productscanwindow, text="-", font=("default", 24),
-                               command=lambda: threading.Thread(target=minusamount).start())
-    minusbutton.grid(row=4, column=0, sticky="new", padx=20, pady=10, columnspan=2)
+    minus_button = ctk.CTkButton(product_scan_window, text="-", font=("default", 24),
+                                 command=lambda: threading.Thread(target=minus_amount).start())
+    minus_button.grid(row=4, column=0, sticky="new", padx=20, pady=10, columnspan=2)
 
-    amountText = amount
-    amountLabel = ctk.CTkLabel(productscanwindow, text=amountText, font=("default", 22))
-    amountLabel.grid(row=3, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
+    amount_text = amount
+    amount_label = ctk.CTkLabel(product_scan_window, text=amount_text, font=("default", 22))
+    amount_label.grid(row=3, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
 
-    cal = Calendar(productscanwindow, selectmode="day", year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
+    cal = Calendar(product_scan_window, selectmode="day", year=datetime.now().year, month=datetime.now().month,
+                   day=datetime.now().day)
     cal.grid(row=2, column=2, sticky="nwes", padx=20, pady=10, columnspan=3, rowspan=3)
 
-    result = ctk.CTkLabel(productscanwindow, text="Result: ", font=("default", 24))
+    result = ctk.CTkLabel(product_scan_window, text="Result: ", font=("default", 24))
     result.grid(row=1, column=2, sticky="new", padx=20, pady=10, columnspan=3)
 
-    productscanwindow.mainloop()
+    product_scan_window.mainloop()
 
-def plusamount():
+
+def plus_amount():
     global amount
-    global amountLabel
+    global amount_label
     amount += 1
-    amountLabel.configure(text=amount)
+    amount_label.configure(text=amount)
 
-def minusamount():
+
+def minus_amount():
     global amount
-    global amountLabel
+    global amount_label
     if amount > 1:
         amount -= 1
-        amountLabel.configure(text=amount)
+        amount_label.configure(text=amount)
 
-def scanproduct():
-    global productscanwindow
-    global barcodeData
+
+def scan_product():
+    global product_scan_window
+    global barcode_data
     global result
-    global responseArray
+    global response_array
     global response
     global url
     vs = VideoStream(usePiCamera=True).start()
@@ -229,29 +236,30 @@ def scanproduct():
         frame = imutils.resize(frame, width=400)
         barcodes = pyzbar.decode(frame)
         for barcode in barcodes:
-            barcodeData = barcode.data.decode("utf-8")
-            print(barcodeData)
-            if(barcodeData != None):
+            barcode_data = barcode.data.decode("utf-8")
+            print(barcode_data)
+            if (barcode_data != None):
                 scanning = False
     vs.stop()
     result.configure(text="Product zoeken...")
-    url = "https://world.openfoodfacts.org/api/v0/product/" + barcodeData + ".json"
-    getresponse()
-    responseArray = json.loads(response)
-    print(responseArray)
-    print(responseArray['status'])
-    if responseArray['status'] == 1:
+    url = "https://world.openfoodfacts.org/api/v0/product/" + barcode_data + ".json"
+    get_response()
+    response_array = json.loads(response)
+    print(response_array)
+    print(response_array['status'])
+    if response_array['status'] == 1:
         print("Product gevonden")
-        print(responseArray['product']['brands'])
-        print(responseArray['product']['product_name'])
-        text = responseArray['product']['brands'] + " " + responseArray['product']['product_name']
+        print(response_array['product']['brands'])
+        print(response_array['product']['product_name'])
+        text = response_array['product']['brands'] + " " + response_array['product']['product_name']
         result.configure(text=text)
     else:
         print("Product niet gevonden")
-        text = barcodeData + " product niet gevonden"
+        text = barcode_data + " product niet gevonden"
         result.configure(text=text)
 
-def getresponse():
+
+def get_response():
     global response
     global url
     trycountdown = 3
@@ -260,12 +268,12 @@ def getresponse():
     except:
         trycountdown -= 1
         if trycountdown > 0:
-            getresponse()
+            get_response()
         else:
             result.configure(text="Geen verbinding")
 
 
-def insertmanually():
+def insert_manually():
     global product_name
     global amount
     global cal
@@ -279,19 +287,20 @@ def insertmanually():
     if name:
         if selected_datetime > today:
             try:
-                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1',
+                                              database='ifridge')
                 cursor = cnx.cursor()
-                addProduct = ("INSERT IGNORE INTO Product"
-                               "(Productcode, Name)"
-                               "VALUES (%s, %s)")
-                productData = (name, name)
-                cursor.execute(addProduct, productData)
-                addItem = ("INSERT INTO Item"
+                add_product = ("INSERT IGNORE INTO Product"
+                              "(Productcode, Name)"
+                              "VALUES (%s, %s)")
+                product_data = (name, name)
+                cursor.execute(add_product, product_data)
+                add_item = ("INSERT INTO Item"
                            "(Productcode, ExpirationDate, Amount)"
                            "VALUES (%s, %s, %s)")
-                expirationDate = cal.selection_get()
-                itemData = (name, expirationDate, amount)
-                cursor.execute(addItem, itemData)
+                expiration_date = cal.selection_get()
+                item_data = (name, expiration_date, amount)
+                cursor.execute(add_item, item_data)
                 cnx.commit()
                 cursor.close()
                 cnx.close()
@@ -304,95 +313,101 @@ def insertmanually():
     else:
         result.configure(text="Naam is leeg!")
 
-def addmanually():
+
+def add_manually():
     global product_name
     global amount
     global cal
     global result
     amount = 1
-    global amountLabel
-    openOsk = False
-    global addmanuallywindow
+    global amount_label
+    open_osk = False
+    global add_manually_window
 
     def close_osk():
-        if openOsk:
+        if open_osk:
             subprocess.Popen("/home/user/Desktop/killkeyboard.sh")
 
     def handle_click(event):
         p = subprocess.Popen("/home/user/Desktop/keyboard.sh")
-        openOsk = True
+        open_osk = True
 
-    addmanuallywindow = Window()
+    add_manually_window = Window()
 
-    addmanuallywindow.columnconfigure((0, 4), weight=1, uniform="a")
-    addmanuallywindow.columnconfigure((1, 2, 3), weight=2, uniform="a")
-    addmanuallywindow.rowconfigure((0), weight=2, uniform="a")
-    addmanuallywindow.rowconfigure((1, 2, 3, 4, 5, 6), weight=2, uniform="a")
+    add_manually_window.columnconfigure((0, 4), weight=1, uniform="a")
+    add_manually_window.columnconfigure((1, 2, 3), weight=2, uniform="a")
+    add_manually_window.rowconfigure((0), weight=2, uniform="a")
+    add_manually_window.rowconfigure((1, 2, 3, 4, 5, 6), weight=2, uniform="a")
 
-    backbutton = ctk.CTkButton(addmanuallywindow, text="Terug", command=lambda: closemanual())
-    backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+    back_button = ctk.CTkButton(add_manually_window, text="Terug", command=lambda: close_manual())
+    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
-    manualtitle = ctk.CTkLabel(addmanuallywindow, text="Handmatig toevoegen", font=("default", 32))
-    manualtitle.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+    manual_title = ctk.CTkLabel(add_manually_window, text="Handmatig toevoegen", font=("default", 32))
+    manual_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
 
-    input_title = ctk.CTkLabel(addmanuallywindow, text="Product naam:", font=("default", 25))
+    input_title = ctk.CTkLabel(add_manually_window, text="Product naam:", font=("default", 25))
     input_title.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
 
-    product_name = ctk.CTkEntry(addmanuallywindow, corner_radius=20, width=350)
+    product_name = ctk.CTkEntry(add_manually_window, corner_radius=20, width=350)
     product_name.grid(row=2, column=0, columnspan=2, padx=25, pady=25)
 
     product_name.bind("<1>", handle_click)
 
-    plusbutton = ctk.CTkButton(addmanuallywindow, text="+", font=("default", 24),command=lambda: threading.Thread(target=plusamount).start())
-    plusbutton.grid(row=4, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
+    plus_button = ctk.CTkButton(add_manually_window, text="+", font=("default", 24),
+                               command=lambda: threading.Thread(target=plus_amount).start())
+    plus_button.grid(row=4, column=0, sticky="ews", padx=20, pady=10, columnspan=2)
 
-    minusbutton = ctk.CTkButton(addmanuallywindow, text="-", font=("default", 24),command=lambda: threading.Thread(target=minusamount).start())
-    minusbutton.grid(row=6, column=0, sticky="new", padx=20, pady=10, columnspan=2)
+    minus_button = ctk.CTkButton(add_manually_window, text="-", font=("default", 24),
+                                command=lambda: threading.Thread(target=minus_amount).start())
+    minus_button.grid(row=6, column=0, sticky="new", padx=20, pady=10, columnspan=2)
 
-    amountText = amount
-    amountLabel = ctk.CTkLabel(addmanuallywindow, text=amountText, font=("default", 22))
-    amountLabel.grid(row=5, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
+    amount_text = amount
+    amount_label = ctk.CTkLabel(add_manually_window, text=amount_text, font=("default", 22))
+    amount_label.grid(row=5, column=0, sticky="nwes", padx=20, pady=10, columnspan=2)
 
-    cal_title = ctk.CTkLabel(addmanuallywindow, text="Datum:", font=("default", 25))
+    cal_title = ctk.CTkLabel(add_manually_window, text="Datum:", font=("default", 25))
     cal_title.grid(row=1, column=2, columnspan=2, padx=10, pady=10)
 
-    cal = Calendar(addmanuallywindow, selectmode="day", year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
+    cal = Calendar(add_manually_window, selectmode="day", year=datetime.now().year, month=datetime.now().month,
+                   day=datetime.now().day)
     cal.grid(row=2, column=2, sticky="nwes", padx=20, pady=10, columnspan=3, rowspan=3)
 
-    button2 = ctk.CTkButton(addmanuallywindow, text="Voeg toe", font=("default", 24), command=lambda: threading.Thread(target=insertmanually).start())
+    button2 = ctk.CTkButton(add_manually_window, text="Voeg toe", font=("default", 24),
+                            command=lambda: threading.Thread(target=insert_manually).start())
     button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=2)
 
-    result = ctk.CTkLabel(addmanuallywindow, text="Result: ", font=("default", 24))
+    result = ctk.CTkLabel(add_manually_window, text="Result: ", font=("default", 24))
     result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
 
-    addmanuallywindow.mainloop()
+    add_manually_window.mainloop()
 
-def closemanual():
-    global addmanuallywindow
+
+def close_manual():
+    global add_manually_window
     subprocess.Popen("/home/user/Desktop/killkeyboard.sh")
-    addmanuallywindow.destroy()
+    add_manually_window.destroy()
 
 
-def insertproduct():
-    global responseArray
+def insert_product():
+    global response_array
     global amount
     global cal
 
-    if responseArray['status'] == 1:
+    if response_array['status'] == 1:
         try:
             cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
             cursor = cnx.cursor()
-            addProduct = ("INSERT IGNORE INTO Product"
-                           "(Productcode, Brand, Name)"
-                           "VALUES (%s, %s, %s)")
-            productData = (barcodeData, responseArray['product']['brands'], responseArray['product']['product_name'])
-            cursor.execute(addProduct, productData)
-            addItem = ("INSERT INTO Item"
+            add_product = ("INSERT IGNORE INTO Product"
+                          "(Productcode, Brand, Name)"
+                          "VALUES (%s, %s, %s)")
+            product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
+            cursor.execute(add_product, product_data)
+            add_item = ("INSERT INTO Item"
                        "(Productcode, ExpirationDate, Amount)"
                        "VALUES (%s, %s, %s)")
-            expirationDate = cal.selection_get()
-            itemData = (barcodeData, expirationDate, amount)
-            cursor.execute(addItem, itemData)
+            expiration_date = cal.selection_get()
+            item_data = (barcode_data, expiration_date, amount)
+            cursor.execute(add_item, item_data)
             cnx.commit()
             cursor.close()
             cnx.close()
@@ -401,21 +416,22 @@ def insertproduct():
         except mysql.connector.Error as err:
             print(err)
 
-def productlist():
-    productlistwindow = Window()
 
-    productlistwindow.columnconfigure((0, 3), weight=1, uniform="a")
-    productlistwindow.columnconfigure((1, 2), weight=2, uniform="a")
-    productlistwindow.rowconfigure((0), weight=1, uniform="a")
-    productlistwindow.rowconfigure((1, 2,), weight=2, uniform="a")
+def product_list():
+    product_list_window = Window()
 
-    backbutton = ctk.CTkButton(productlistwindow, text="Terug", command=lambda: productlistwindow.destroy())
-    backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+    product_list_window.columnconfigure((0, 3), weight=1, uniform="a")
+    product_list_window.columnconfigure((1, 2), weight=2, uniform="a")
+    product_list_window.rowconfigure((0), weight=1, uniform="a")
+    product_list_window.rowconfigure((1, 2,), weight=2, uniform="a")
 
-    listtitle = ctk.CTkLabel(productlistwindow, text="Productenlijst", font=("default", 32))
-    listtitle.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+    back_button = ctk.CTkButton(product_list_window, text="Terug", command=lambda: product_list_window.destroy())
+    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
-    main_frame = ctk.CTkFrame(master=productlistwindow)
+    list_title = ctk.CTkLabel(product_list_window, text="Productenlijst", font=("default", 32))
+    list_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+
+    main_frame = ctk.CTkFrame(master=product_list_window)
     main_frame.grid(column=0, columnspan=4, row=1, rowspan=2, sticky="nsew")
 
     product_canvas = ctk.CTkCanvas(master=main_frame)
@@ -431,50 +447,51 @@ def productlist():
 
     product_canvas.create_window((0, 0), window=product_frame, anchor="nw")
 
-    ProductRowCount = 1
+    product_row_count = 1
     try:
         cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
         cursor = cnx.cursor()
         cursor.execute("SELECT * FROM Product")
-        resultproductlist = cursor.fetchall()
+        result_product_list = cursor.fetchall()
         cursor.close()
         cnx.close()
-        for product in resultproductlist:
-            ProductItem(product_frame, title=product[1] + " " + product[2], productcode=product[0]).grid(row=ProductRowCount, pady=10, padx=30, sticky="nsew")
-            ProductRowCount += 1
+        for product in result_product_list:
+            ProductItem(product_frame, title=product[1] + " " + product[2], product_code=product[0]).grid(
+                row=product_row_count, pady=10, padx=30, sticky="nsew")
+            product_row_count += 1
     except mysql.connector.Error as err:
         print(err)
 
-    productlistwindow.mainloop()
+    product_list_window.mainloop()
 
 
 def settings():
-    global settingswindow
-    settingswindow = ctk.CTk()
-    settingswindow.title("iFridge")
-    settingswindow.attributes("-fullscreen", True)
-    settingswindow.bind("<Escape>", quit)
+    global settings_window
+    settings_window = ctk.CTk()
+    settings_window.title("iFridge")
+    settings_window.attributes("-fullscreen", True)
+    settings_window.bind("<Escape>", quit)
 
-    settingswindow.columnconfigure((0, 3), weight=1, uniform="a")
-    settingswindow.columnconfigure((1, 2), weight=2, uniform="a")
-    settingswindow.rowconfigure((0), weight=1, uniform="a")
-    settingswindow.rowconfigure((1, 2, 3, 4), weight=2, uniform="a")
+    settings_window.columnconfigure((0, 3), weight=1, uniform="a")
+    settings_window.columnconfigure((1, 2), weight=2, uniform="a")
+    settings_window.rowconfigure((0), weight=1, uniform="a")
+    settings_window.rowconfigure((1, 2, 3, 4), weight=2, uniform="a")
 
-    backbutton = ctk.CTkButton(settingswindow, text="Terug", command=lambda: settingswindow.destroy())
-    backbutton.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+    back_button = ctk.CTkButton(settings_window, text="Terug", command=lambda: settings_window.destroy())
+    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
-    settingstitle = ctk.CTkLabel(settingswindow, text="Instellingen", font=("default", 32))
-    settingstitle.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+    settings_title = ctk.CTkLabel(settings_window, text="Instellingen", font=("default", 32))
+    settings_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
 
-    quitbutton = ctk.CTkButton(settingswindow, text="Quit", command=lambda: quitall(), font=("defaut", 24))
-    quitbutton.grid(row=1, column=1, columnspan=2, sticky="news", padx=20, pady=10)
+    quit_button = ctk.CTkButton(settings_window, text="Quit", command=lambda: quitall(), font=("defaut", 24))
+    quit_button.grid(row=1, column=1, columnspan=2, sticky="news", padx=20, pady=10)
 
-    settingswindow.mainloop()
+    settings_window.mainloop()
 
 
 def quitall():
-    settingswindow.destroy()
+    settings_window.destroy()
     main.destroy()
 
 
-mainmenu()
+main_menu()

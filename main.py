@@ -534,7 +534,7 @@ def recipes():
     recipes_window.mainloop()
 
 
-def generaterecipie():
+def generate_recipie():
     main_ingredient = str(dropdown.get())
 
     try:

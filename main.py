@@ -326,7 +326,7 @@ def addmanually():
 
     addmanuallywindow.columnconfigure((0, 4), weight=1, uniform="a")
     addmanuallywindow.columnconfigure((1, 2, 3), weight=2, uniform="a")
-    addmanuallywindow.rowconfigure((0), weight=1, uniform="a")
+    addmanuallywindow.rowconfigure((0), weight=2, uniform="a")
     addmanuallywindow.rowconfigure((1, 2, 3, 4, 5, 6), weight=2, uniform="a")
 
     backbutton = ctk.CTkButton(addmanuallywindow, text="Terug", command=lambda: closemanual())

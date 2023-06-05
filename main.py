@@ -486,7 +486,77 @@ def settings():
     quit_button = ctk.CTkButton(settings_window, text="Quit", command=lambda: quitall(), font=("defaut", 24))
     quit_button.grid(row=1, column=1, columnspan=2, sticky="news", padx=20, pady=10)
 
+    recipes_button = ctk.CTkButton(settings_window, text="Recepten Maker", command=lambda: recipes(), font=("defaut", 24))
+    recipes_button.grid(row=2, column=1, columnspan=2, sticky="news", padx=20, pady=10)
+
     settings_window.mainloop()
+
+def recipes():
+    global recipes_window
+    recipes_window = Window()
+    global dropdown
+    global products
+
+    products = []
+
+    recipes_window.columnconfigure((0, 3), weight=1, uniform="a")
+    recipes_window.columnconfigure((1, 2), weight=2, uniform="a")
+    recipes_window.rowconfigure((0), weight=1, uniform="a")
+    recipes_window.rowconfigure((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), weight=2, uniform="a")
+
+    back_button = ctk.CTkButton(recipes_window, text="Terug", command=lambda: recipes_window.destroy())
+    back_button.grid(row=0, column=0, sticky="nwse", padx=5, pady=5)
+
+    list_title = ctk.CTkLabel(recipes_window, text="Recepten Maker", font=("default", 32))
+    list_title.grid(row=0, rowspan=2, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+
+    try:
+        cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+        cursor = cnx.cursor()
+        cursor.execute("SELECT * FROM Product")
+        result_product_list = cursor.fetchall()
+        cursor.close()
+        cnx.close()
+        for product in result_product_list:
+            products.append(product[1] + " " + product[2])
+    except mysql.connector.Error as err:
+        print(err)
+
+    instruction = ctk.CTkLabel(recipes_window, text="Kies een product om een recept op te baseren", font=("default", 18), height=50)
+    instruction.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
+
+    dropdown = ctk.CTkOptionMenu(master=recipes_window, values=products)
+    dropdown.grid(row=2, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
+
+    generate_button = ctk.CTkButton(recipes_window, width=300, text="maak recept", command=lambda: threading.Thread(target=generate_recipie).start())
+    generate_button.grid(row=3, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
+
+    recipes_window.mainloop()
+
+
+def generaterecipie():
+    main_ingredient = str(dropdown.get())
+
+    try:
+        response = requests.post("http://ifridge.local/recipe", data={"mainIngredient": main_ingredient, "ingredients": products})
+        recipe_Title = response.json()["prefix"]
+        ingredient_List = response.json()["ingredients"]
+        recipe_instructions = response.json()["instructions"]
+        suffix = response.json()["suffix"]
+    except requests.exceptions.ConnectionError:
+        response
+
+    recipe_Title_Text = ctk.CTkLabel(recipes_window, text=recipe_Title, font=("default", 16), justify="center", bg_color="grey")
+    recipe_Title_Text.grid(row=4, column=1, columnspan=2, padx=10, pady=10)
+
+    ingridient_list_Text = ctk.CTkLabel(recipes_window, text=ingredient_List, font=("default", 16), justify="center", bg_color="grey")
+    ingridient_list_Text.grid(row=5, rowspan=3, column=1, columnspan=2, padx=10, pady=10)
+
+    recipe_instructions_Text = ctk.CTkLabel(recipes_window, text=recipe_instructions, font=("default", 16), justify="center", bg_color="grey")
+    recipe_instructions_Text.grid(row=5, rowspan=3, column=2, columnspan=2, padx=10, pady=10)
+
+    suffix_Text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 16), justify="center",bg_color="grey")
+    suffix_Text.grid(row=8, rowspan=1, column=1, columnspan=2, padx=10, pady=10)
 
 
 def quitall():

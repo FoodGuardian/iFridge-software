@@ -505,7 +505,7 @@ def recipes():
     recipes_window.rowconfigure((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), weight=2, uniform="a")
 
     back_button = ctk.CTkButton(recipes_window, text="Terug", command=lambda: recipes_window.destroy())
-    back_button.grid(row=0, column=0, sticky="nwse", padx=5, pady=5)
+    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
     list_title = ctk.CTkLabel(recipes_window, text="Recepten Maker", font=("default", 32))
     list_title.grid(row=0, rowspan=2, column=1, columnspan=2, sticky="new", padx=20, pady=10)
@@ -543,20 +543,25 @@ def generate_recipie():
         ingredient_List = response.json()["ingredients"]
         recipe_instructions = response.json()["instructions"]
         suffix = response.json()["suffix"]
+        recipe_check = True
     except requests.exceptions.ConnectionError:
-        response
+        recipe_check = False
 
-    recipe_Title_Text = ctk.CTkLabel(recipes_window, text=recipe_Title, font=("default", 16), justify="center", bg_color="grey")
-    recipe_Title_Text.grid(row=4, column=1, columnspan=2, padx=10, pady=10)
+    if recipe_check:
+        recipe_Title_Text = ctk.CTkLabel(recipes_window, text=recipe_Title, font=("default", 16), justify="center")
+        recipe_Title_Text.grid(row=4, column=1, columnspan=2, padx=10, pady=10)
 
-    ingridient_list_Text = ctk.CTkLabel(recipes_window, text=ingredient_List, font=("default", 16), justify="center", bg_color="grey")
-    ingridient_list_Text.grid(row=5, rowspan=3, column=1, columnspan=2, padx=10, pady=10)
+        ingridient_list_Text = ctk.CTkLabel(recipes_window, text=ingredient_List, font=("default", 16), justify="center", bg_color="gray")
+        ingridient_list_Text.grid(row=5, rowspan=3, column=1, columnspan=2, padx=10, pady=10)
 
-    recipe_instructions_Text = ctk.CTkLabel(recipes_window, text=recipe_instructions, font=("default", 16), justify="center", bg_color="grey")
-    recipe_instructions_Text.grid(row=5, rowspan=3, column=2, columnspan=2, padx=10, pady=10)
+        recipe_instructions_Text = ctk.CTkLabel(recipes_window, text=recipe_instructions, font=("default", 16), justify="center", bg_color="gray")
+        recipe_instructions_Text.grid(row=5, rowspan=3, column=2, columnspan=2, padx=10, pady=10)
 
-    suffix_Text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 16), justify="center",bg_color="grey")
-    suffix_Text.grid(row=8, rowspan=1, column=1, columnspan=2, padx=10, pady=10)
+        suffix_Text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 16), justify="center")
+        suffix_Text.grid(row=8, rowspan=1, column=1, columnspan=2, padx=10, pady=10)
+    else:
+        error_message = ctk.CTkLabel(recipes_window, text="Er is iets mis gegaan.", font=("default", 24))
+        error_message.grid(row=6, column=1, columnspan=2, padx=10, pady=10)
 
 
 def quitall():

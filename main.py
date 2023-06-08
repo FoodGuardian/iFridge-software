@@ -313,6 +313,16 @@ def insert_manually():
     else:
         result.configure(text="Naam is leeg!")
 
+def close_osk():
+    global open_osk
+    if open_osk:
+        subprocess.Popen("/home/user/Desktop/killkeyboard.sh")
+
+def handle_click(event):
+    global open_osk
+    p = subprocess.Popen("/home/user/Desktop/keyboard.sh")
+    open_osk = True
+
 
 def add_manually():
     global product_name
@@ -321,16 +331,11 @@ def add_manually():
     global result
     amount = 1
     global amount_label
+    global open_osk
     open_osk = False
     global add_manually_window
 
-    def close_osk():
-        if open_osk:
-            subprocess.Popen("/home/user/Desktop/killkeyboard.sh")
 
-    def handle_click(event):
-        p = subprocess.Popen("/home/user/Desktop/keyboard.sh")
-        open_osk = True
 
     add_manually_window = Window()
 
@@ -489,7 +494,61 @@ def settings():
     recipes_button = ctk.CTkButton(settings_window, text="Recepten Maker", command=lambda: recipes(), font=("defaut", 24))
     recipes_button.grid(row=2, column=1, columnspan=2, sticky="news", padx=20, pady=10)
 
+    wifi_button = ctk.CTkButton(settings_window, text="WIFI", command=lambda: wifi_settings(),
+                                   font=("defaut", 24))
+    wifi_button.grid(row=3, column=1, columnspan=2, sticky="news", padx=20, pady=10)
+
     settings_window.mainloop()
+
+def wifi_settings():
+    global open_osk
+    open_osk = False
+    global wifi_window
+
+    wifi_window = Window()
+
+    wifi_window.columnconfigure((0, 4), weight=1, uniform="a")
+    wifi_window.columnconfigure((1, 2, 3), weight=2, uniform="a")
+    wifi_window.rowconfigure((0), weight=2, uniform="a")
+    wifi_window.rowconfigure((1, 2, 3, 4, 5, 6), weight=2, uniform="a")
+
+    back_button = ctk.CTkButton(wifi_window, text="Terug", command=lambda: close_wifi())
+    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+
+    wifi_title = ctk.CTkLabel(wifi_window, text="WIFI", font=("default", 32))
+    wifi_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+
+    ssid_title = ctk.CTkLabel(wifi_window, text="SSID:", font=("default", 25))
+    ssid_title.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ws")
+
+    ssid_entry = ctk.CTkEntry(wifi_window, corner_radius=20, width=350)
+    ssid_entry.grid(row=2, column=0, columnspan=2, rowspan=2, padx=25, pady=25, sticky="nw")
+
+    pswd_title = ctk.CTkLabel(wifi_window, text="Wachtwoord:", font=("default", 25))
+    pswd_title.grid(row=1, column=3, columnspan=2, padx=10, pady=10, sticky="ws")
+
+    pswd_entry = ctk.CTkEntry(wifi_window, corner_radius=20, width=350)
+    pswd_entry.grid(row=2, column=3, columnspan=2, padx=25, pady=25, sticky="nw", rowspan=2)
+
+    ssid_entry.bind("<1>", handle_click)
+    pswd_entry.bind("<1>", handle_click)
+
+    button2 = ctk.CTkButton(wifi_window, text="Opslaan", font=("default", 24),
+                            command=lambda: threading.Thread(target=save_wifi).start())
+    button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=2)
+
+    result = ctk.CTkLabel(wifi_window, text="Result: ", font=("default", 24))
+    result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
+
+    wifi_window.mainloop()
+
+def close_wifi():
+    global wifi_window
+    subprocess.Popen("/home/user/Desktop/killkeyboard.sh")
+    wifi_window.destroy()
+
+def save_wifi():
+    print("test")
 
 def recipes():
     global recipes_window

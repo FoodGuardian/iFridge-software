@@ -565,10 +565,8 @@ def save_wifi():
     ]
     config = '\n'.join(config_lines)
 
-    # give access and writing. may have to do this manually beforehand
     os.popen("sudo chmod a+w /etc/wpa_supplicant/wpa_supplicant.conf")
 
-    # writing to file
     with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as wifi:
         wifi.write(config)
 

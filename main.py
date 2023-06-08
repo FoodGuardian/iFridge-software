@@ -508,11 +508,11 @@ def recipes():
     back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
     list_title = ctk.CTkLabel(recipes_window, text="Recepten Maker", font=("default", 32))
-    list_title.grid(row=0, rowspan=2, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+    list_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
 
     #A connection to the database, all products are pulled from the database and put in the list 'products'.
     try:
-        cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='ifridge.local', database='ifridge')
+        cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
         cursor = cnx.cursor()
         cursor.execute("SELECT * FROM Product")
         result_product_list = cursor.fetchall()
@@ -551,19 +551,33 @@ def generate_recipe():
         ingredients_and_instructions = response.text.replace("Opmerking: " + suffix, "").replace('"', "").replace(
             "Recept: " + recipe_title, "").replace("[", "").replace("instructions:", "Instructie:").replace(
             "ingredients:", "Ingredienten:").replace("],", "").replace("prefix:", "").replace("u00b0", "˚").replace(
-            "u00e9", "ë").replace("suffix:", "").replace("{", "").replace("}", "").replace(".,", ".").replace(" , ", "")
+            "u00e9", "ë").replace("suffix:", "").replace("{", "").replace("}", "").replace(".,", ".").replace(" , ", "").replace(
+            prefix, "").replace(suffix, "")
         recipe_check = True
     except requests.exceptions.ConnectionError:
         recipe_check = False
 
     #A check to make sure that there was a connection made to the api and everything went right in the api.
     if recipe_check:
-        recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 16), justify="center")
+        recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 14), justify="center")
         recipe_title_text.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
+
+        count1 = 0
+        count2 = ingredients_and_instructions.count(".")
+        if count1 <= count2:
+            for x in ingredients_and_instructions:
+                dot1 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1)
+                dot2 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1 + 1)
+                if len(ingredients_and_instructions[:dot2]) - len(ingredients_and_instructions[:dot1]) > 125:
+                    sentence = ingredients_and_instructions.replace(ingredients_and_instructions[:dot1], "").replace(ingredients_and_instructions[dot2:], "")
+                    index = sentence.find(" ", sentence.find(" ") + 8)
+                    ingredients_and_instructions = ingredients_and_instructions[:index] + "\n" + ingredients_and_instructions[index:]
+                count1 += 1
 
         ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center")
         ingredients_and_instructions_text.grid(row=5, rowspan=6, column=0, columnspan=4, padx=10, pady=10)
-        if len(suffix) < 200:
+
+        if len(suffix) < 125:
             suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
             suffix_text.grid(row=11, rowspan=1, column=0, columnspan=4, padx=10, pady=10)
         else:

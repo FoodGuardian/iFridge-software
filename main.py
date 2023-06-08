@@ -504,6 +504,9 @@ def wifi_settings():
     global open_osk
     open_osk = False
     global wifi_window
+    global ssid_entry
+    global pswd_entry
+    global wifi_result
 
     wifi_window = Window()
 
@@ -537,8 +540,8 @@ def wifi_settings():
                             command=lambda: threading.Thread(target=save_wifi).start())
     button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=2)
 
-    result = ctk.CTkLabel(wifi_window, text="Result: ", font=("default", 24))
-    result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
+    wifi_result = ctk.CTkLabel(wifi_window, text="Result: ", font=("default", 24))
+    wifi_result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
 
     wifi_window.mainloop()
 
@@ -548,7 +551,30 @@ def close_wifi():
     wifi_window.destroy()
 
 def save_wifi():
-    print("test")
+    global ssid_entry
+    global pswd_entry
+    config_lines = [
+        'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev',
+        'update_config=1',
+        'country=NL',
+        '\n',
+        'network={',
+        '\tssid="{}"'.format(ssid_entry.get()),
+        '\tpsk="{}"'.format(pswd_entry.get()),
+        '}'
+    ]
+    config = '\n'.join(config_lines)
+
+    # give access and writing. may have to do this manually beforehand
+    os.popen("sudo chmod a+w /etc/wpa_supplicant/wpa_supplicant.conf")
+
+    # writing to file
+    with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as wifi:
+        wifi.write(config)
+
+    os.popen("sudo reboot")
+    wifi_result.configure(text="WIFI opgeslagen")
+
 
 def recipes():
     global recipes_window

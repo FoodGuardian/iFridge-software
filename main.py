@@ -510,8 +510,9 @@ def recipes():
     list_title = ctk.CTkLabel(recipes_window, text="Recepten Maker", font=("default", 32))
     list_title.grid(row=0, rowspan=2, column=1, columnspan=2, sticky="new", padx=20, pady=10)
 
+    #A connection to the database, all products are pulled from the database and put in the list 'products'.
     try:
-        cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+        cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='ifridge.local', database='ifridge')
         cursor = cnx.cursor()
         cursor.execute("SELECT * FROM Product")
         result_product_list = cursor.fetchall()
@@ -522,12 +523,15 @@ def recipes():
     except mysql.connector.Error as err:
         print(err)
 
+    #
     instruction = ctk.CTkLabel(recipes_window, text="Kies een product om een recept op te baseren", font=("default", 18), height=50)
     instruction.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
 
+    #The dropdown menu in witch the list 'products' is put.
     dropdown = ctk.CTkOptionMenu(master=recipes_window, values=products)
     dropdown.grid(row=2, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
 
+    #The button witch when pressed threads to 'generate_recipe' and thus generates a recipe.
     generate_button = ctk.CTkButton(recipes_window, width=300, text="maak recept", command=lambda: threading.Thread(target=generate_recipe).start())
     generate_button.grid(row=3, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
 
@@ -535,29 +539,39 @@ def recipes():
 
 
 def generate_recipe():
+    #The ingredient/product that is selected in the dropdown menu.
     main_ingredient = str(dropdown.get())
 
+    #A connection is made to the /recipe part of the api. Both the mainingredient and all the other products in the fridge are given as parameters.
+    #Then the api generates a recipe based on these parameters.
     try:
         response = requests.post("http://ifridge.local/recipe", data={"mainIngredient": main_ingredient, "ingredients": products})
-        recipe_title = response.json()["prefix"]
-        suffix = response.json()["suffix"]
-        ingredients_and_instructions = response.text.replace(suffix, "").replace('"', "").replace(
-            response.json()["prefix"], "").replace("[", "").replace("instructions:", "Instructie:").replace(
+        recipe_title = response.json()["prefix"].replace("Recept: ", "")
+        suffix = response.json()["suffix"].replace("Opmerking: ", "")
+        ingredients_and_instructions = response.text.replace("Opmerking: " + suffix, "").replace('"', "").replace(
+            "Recept: " + recipe_title, "").replace("[", "").replace("instructions:", "Instructie:").replace(
             "ingredients:", "Ingredienten:").replace("],", "").replace("prefix:", "").replace("u00b0", "˚").replace(
-            "u00e9", "ë").replace("suffix:", "").replace("{", "").replace("}", "").replace(",.", ".").replace(" , ", "")
+            "u00e9", "ë").replace("suffix:", "").replace("{", "").replace("}", "").replace(".,", ".").replace(" , ", "")
         recipe_check = True
     except requests.exceptions.ConnectionError:
         recipe_check = False
 
+    #A check to make sure that there was a connection made to the api and everything went right in the api.
     if recipe_check:
         recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 16), justify="center")
-        recipe_title_text.grid(row=4, column=1, columnspan=4, padx=10, pady=10)
+        recipe_title_text.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
 
-        ingredients_and_instructions_text = tk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center", bg_color="gray")
-        ingredients_and_instructions_text.grid(row=5, rowspan=6, column=1, columnspan=4, padx=10, pady=10)
-
-        suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
-        suffix_text.grid(row=11, rowspan=1, column=1, columnspan=4, padx=10, pady=10)
+        ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center")
+        ingredients_and_instructions_text.grid(row=5, rowspan=6, column=0, columnspan=4, padx=10, pady=10)
+        if len(suffix) < 200:
+            suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
+            suffix_text.grid(row=11, rowspan=1, column=0, columnspan=4, padx=10, pady=10)
+        else:
+            suffix.find(".")
+            index = suffix.find(".", suffix.find(".") + 1)
+            suffix = suffix[:index] + "\n" + suffix[index:]
+            suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
+            suffix_text.grid(row=11, rowspan=1, column=0, columnspan=4, padx=10, pady=10)
     else:
         error_message = ctk.CTkLabel(recipes_window, text="Er is iets mis gegaan.", font=("default", 24))
         error_message.grid(row=6, column=1, columnspan=2, padx=10, pady=10)

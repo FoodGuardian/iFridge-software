@@ -12,6 +12,8 @@ import requests
 from imutils.video import VideoStream
 from pyzbar import pyzbar
 from tkcalendar import *
+from pydub import AudioSegment
+from pydub.playback import play
 
 if os.environ.get('DISPLAY', '') == '':
     os.environ.__setitem__('DISPLAY', ':0.0')
@@ -240,6 +242,7 @@ def scan_product():
             print(barcode_data)
             if (barcode_data != None):
                 scanning = False
+                play(AudioSegment.from_mp3("bleep.mp3"))
     vs.stop()
     result.configure(text="Product zoeken...")
     url = "https://world.openfoodfacts.org/api/v0/product/" + barcode_data + ".json"

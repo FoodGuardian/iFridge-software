@@ -142,6 +142,9 @@ def main_menu():
     title = ctk.CTkLabel(main, text="iFridge", font=("default", 32))
     title.grid(row=0, column=0, sticky="new", padx=20, pady=10, columnspan=2)
 
+    button2 = ctk.CTkButton(main, text="Instellingen", command=lambda: settings())
+    button2.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+
     button1 = ctk.CTkButton(main, text="Producten scannen", command=lambda: product_scan(), font=("default", 24))
     button1.grid(row=1, column=0, sticky="news", padx=20, pady=10)
 
@@ -151,7 +154,7 @@ def main_menu():
     button1 = ctk.CTkButton(main, text="Productenlijst", font=("default", 24), command=lambda: product_list())
     button1.grid(row=2, column=0, sticky="news", padx=20, pady=10)
 
-    button2 = ctk.CTkButton(main, text="Instellingen", font=("default", 24), command=lambda: settings())
+    button2 = ctk.CTkButton(main, text="Recepten maken", font=("default", 24), command=lambda: recipes())
     button2.grid(row=2, column=1, sticky="news", padx=20, pady=10)
 
     main.mainloop()
@@ -494,16 +497,11 @@ def settings():
     quit_button = ctk.CTkButton(settings_window, text="Quit", command=lambda: quitall(), font=("defaut", 24))
     quit_button.grid(row=1, column=1, columnspan=2, sticky="news", padx=20, pady=10)
 
-    recipes_button = ctk.CTkButton(settings_window, text="Recepten Maker", command=lambda: recipes(), font=("defaut", 24))
-    recipes_button.grid(row=2, column=1, columnspan=2, sticky="news", padx=20, pady=10)
+    wifi_button = ctk.CTkButton(settings_window, text="WIFI", command=lambda: wifi_settings(), font=("defaut", 24))
+    wifi_button.grid(row=2, column=1, columnspan=2, sticky="news", padx=20, pady=10)
 
-    wifi_button = ctk.CTkButton(settings_window, text="WIFI", command=lambda: wifi_settings(),
-                                   font=("defaut", 24))
-    wifi_button.grid(row=3, column=1, columnspan=2, sticky="news", padx=20, pady=10)
-
-    shutdown_button = ctk.CTkButton(settings_window, text="Uitschakelen", command=lambda: shutdown(),
-                                font=("defaut", 24))
-    shutdown_button.grid(row=4, column=1, columnspan=2, sticky="news", padx=20, pady=10)
+    shutdown_button = ctk.CTkButton(settings_window, text="Uitschakelen", command=lambda: shutdown(), font=("defaut", 24))
+    shutdown_button.grid(row=3, column=1, columnspan=2, sticky="news", padx=20, pady=10)
 
     settings_window.mainloop()
 
@@ -599,10 +597,10 @@ def recipes():
     recipes_window.rowconfigure((1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), weight=2, uniform="a")
 
     back_button = ctk.CTkButton(recipes_window, text="Terug", command=lambda: recipes_window.destroy())
-    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
+    back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=2)
 
     list_title = ctk.CTkLabel(recipes_window, text="Recepten Maker", font=("default", 32))
-    list_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20, pady=10)
+    list_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20)
 
     #A connection to the database, all products are pulled from the database and put in the list 'products'.
     try:
@@ -646,7 +644,7 @@ def generate_recipe():
             "Recept: " + recipe_title, "").replace("[", "").replace("instructions:", "Instructie:").replace(
             "ingredients:", "Ingredienten:").replace("],", "").replace("prefix:", "").replace("u00b0", "˚").replace(
             "u00e9", "ë").replace("suffix:", "").replace("{", "").replace("}", "").replace(".,", ".").replace(" , ", "").replace(
-            prefix, "").replace(suffix, "")
+            recipe_title, "").replace(suffix, "").replace("Geniet van je smaakvolle ! ", "")
         recipe_check = True
     except requests.exceptions.ConnectionError:
         recipe_check = False
@@ -664,7 +662,7 @@ def generate_recipe():
                 dot2 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1 + 1)
                 if len(ingredients_and_instructions[:dot2]) - len(ingredients_and_instructions[:dot1]) > 125:
                     sentence = ingredients_and_instructions.replace(ingredients_and_instructions[:dot1], "").replace(ingredients_and_instructions[dot2:], "")
-                    index = sentence.find(" ", sentence.find(" ") + 8)
+                    index = sentence.find(" ", sentence.find(" ") + 12)
                     ingredients_and_instructions = ingredients_and_instructions[:index] + "\n" + ingredients_and_instructions[index:]
                 count1 += 1
 

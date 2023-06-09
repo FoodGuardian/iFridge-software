@@ -501,7 +501,15 @@ def settings():
                                    font=("defaut", 24))
     wifi_button.grid(row=3, column=1, columnspan=2, sticky="news", padx=20, pady=10)
 
+    shutdown_button = ctk.CTkButton(settings_window, text="Uitschakelen", command=lambda: shutdown(),
+                                font=("defaut", 24))
+    shutdown_button.grid(row=4, column=1, columnspan=2, sticky="news", padx=20, pady=10)
+
     settings_window.mainloop()
+
+
+def shutdown():
+    os.popen("sudo shutdown now")
 
 def wifi_settings():
     global open_osk

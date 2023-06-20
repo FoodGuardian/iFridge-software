@@ -1,0 +1,6 @@
+pydub
+pyzbar
+customtkinter
+mysql-connector-python
+imutils
+tkcalendar

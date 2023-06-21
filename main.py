@@ -166,6 +166,8 @@ def product_scan():
     global amount
     global amount_label
     global cal
+    global scanning
+    scanning = False
     amount = 1
     product_scan_window = Window()
 
@@ -406,28 +408,32 @@ def insert_product():
     global amount
     global cal
 
+    selected_datetime = datetime.combine(cal.selection_get(), datetime.min.time())
     if response_array['status'] == 1:
-        try:
-            cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
-            cursor = cnx.cursor()
-            add_product = ("INSERT IGNORE INTO Product"
-                          "(Productcode, Brand, Name)"
-                          "VALUES (%s, %s, %s)")
-            product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
-            cursor.execute(add_product, product_data)
-            add_item = ("INSERT INTO Item"
-                       "(Productcode, ExpirationDate, Amount)"
-                       "VALUES (%s, %s, %s)")
-            expiration_date = cal.selection_get()
-            item_data = (barcode_data, expiration_date, amount)
-            cursor.execute(add_item, item_data)
-            cnx.commit()
-            cursor.close()
-            cnx.close()
-            result.configure(text="Product toegevoegd")
+        if selected_datetime > datetime.now():
+            try:
+                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+                cursor = cnx.cursor()
+                add_product = ("INSERT IGNORE INTO Product"
+                              "(Productcode, Brand, Name)"
+                              "VALUES (%s, %s, %s)")
+                product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
+                cursor.execute(add_product, product_data)
+                add_item = ("INSERT INTO Item"
+                           "(Productcode, ExpirationDate, Amount)"
+                           "VALUES (%s, %s, %s)")
+                expiration_date = cal.selection_get()
+                item_data = (barcode_data, expiration_date, amount)
+                cursor.execute(add_item, item_data)
+                cnx.commit()
+                cursor.close()
+                cnx.close()
+                result.configure(text="Product toegevoegd")
 
-        except mysql.connector.Error as err:
-            print(err)
+            except mysql.connector.Error as err:
+                print(err)
+        else:
+            result.configure(text="Verkeerde datum ingevuld")
 
 
 def product_list():

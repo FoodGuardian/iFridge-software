@@ -559,9 +559,6 @@ def wifi_settings():
                             command=lambda: threading.Thread(target=save_wifi).start())
     button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=2)
 
-    wifi_result = ctk.CTkLabel(wifi_window, text="Result: ", font=("default", 24))
-    wifi_result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
-
     wifi_window.mainloop()
 
 def close_wifi():
@@ -590,7 +587,6 @@ def save_wifi():
         wifi.write(config)
 
     os.popen("sudo reboot")
-    wifi_result.configure(text="WIFI opgeslagen")
 
 
 def recipes():

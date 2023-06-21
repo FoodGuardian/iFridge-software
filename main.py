@@ -263,10 +263,12 @@ def scan_product():
             print(response_array['product']['product_name'])
             text = response_array['product']['brands'] + " " + response_array['product']['product_name']
             result.configure(text=text)
+            scanning = False
         else:
             print("Product niet gevonden")
             text = barcode_data + " product niet gevonden"
             result.configure(text=text)
+            scanning = False
 
 
 def get_response():

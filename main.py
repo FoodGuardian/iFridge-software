@@ -483,6 +483,9 @@ def product_list():
     except mysql.connector.Error as err:
         print(err)
 
+    expand_label = ctk.CTkLabel(product_frame, text=" ", height=250)
+    expand_label.grid(row=product_row_count, pady=10, padx=30, sticky="nsew")
+
     product_list_window.mainloop()
 
 

@@ -232,37 +232,39 @@ def scan_product():
     global response_array
     global response
     global url
-    vs = VideoStream(usePiCamera=True).start()
-    time.sleep(2.0)
-    scanning = True
-    result.configure(text="Scanning...")
-    while scanning:
-        frame = vs.read()
-        frame = imutils.resize(frame, width=400)
-        barcodes = pyzbar.decode(frame)
-        for barcode in barcodes:
-            barcode_data = barcode.data.decode("utf-8")
-            print(barcode_data)
-            if (barcode_data != None):
-                scanning = False
-                play(AudioSegment.from_mp3("bleep.mp3"))
-    vs.stop()
-    result.configure(text="Product zoeken...")
-    url = "https://world.openfoodfacts.org/api/v0/product/" + barcode_data + ".json"
-    get_response()
-    response_array = json.loads(response)
-    print(response_array)
-    print(response_array['status'])
-    if response_array['status'] == 1:
-        print("Product gevonden")
-        print(response_array['product']['brands'])
-        print(response_array['product']['product_name'])
-        text = response_array['product']['brands'] + " " + response_array['product']['product_name']
-        result.configure(text=text)
-    else:
-        print("Product niet gevonden")
-        text = barcode_data + " product niet gevonden"
-        result.configure(text=text)
+    global scanning
+    if not scanning:
+        vs = VideoStream(usePiCamera=True).start()
+        time.sleep(2.0)
+        scanning = True
+        result.configure(text="Scanning...")
+        while scanning:
+            frame = vs.read()
+            frame = imutils.resize(frame, width=400)
+            barcodes = pyzbar.decode(frame)
+            for barcode in barcodes:
+                barcode_data = barcode.data.decode("utf-8")
+                print(barcode_data)
+                if (barcode_data != None):
+                    scanning = False
+                    play(AudioSegment.from_mp3("bleep.mp3"))
+        vs.stop()
+        result.configure(text="Product zoeken...")
+        url = "https://world.openfoodfacts.org/api/v0/product/" + barcode_data + ".json"
+        get_response()
+        response_array = json.loads(response)
+        print(response_array)
+        print(response_array['status'])
+        if response_array['status'] == 1:
+            print("Product gevonden")
+            print(response_array['product']['brands'])
+            print(response_array['product']['product_name'])
+            text = response_array['product']['brands'] + " " + response_array['product']['product_name']
+            result.configure(text=text)
+        else:
+            print("Product niet gevonden")
+            text = barcode_data + " product niet gevonden"
+            result.configure(text=text)
 
 
 def get_response():

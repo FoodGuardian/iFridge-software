@@ -708,17 +708,17 @@ def generate_recipe():
                 count1 += 1
 
         ingredients_and_instructions_text = ctk.CTkLabel(recipe_frame, text=ingredients_and_instructions, font=("default", 12), justify="center")
-        ingredients_and_instructions_text.grid(column=0, padx=10, pady=10, sticky="nsew")
+        ingredients_and_instructions_text.grid(column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
         if len(suffix) < 75:
             suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center")
-            suffix_text.grid(column=0, padx=10, pady=10, sticky="nsew")
+            suffix_text.grid(column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
         else:
             suffix.find(".")
             index = suffix.find(" ", suffix.find(" ") + 100)
             suffix = suffix[:index] + "\n" + suffix[index:]
             suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center")
-            suffix_text.grid(column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+            suffix_text.grid(column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
 
     else:
         generating_text.destroy()

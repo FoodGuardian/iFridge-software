@@ -694,18 +694,31 @@ def generate_recipe():
         recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 14), justify="center")
         recipe_title_text.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
 
-        ingredients_and_instructions_text = ctk.CTkLabel(recipe_frame, text=ingredients_and_instructions, font=("default", 12), justify="center", width=50)
-        ingredients_and_instructions_text.grid(rowspan=6, column=0, columnspan=4, padx=50, pady=10, sticky="nsew")
+        count1 = 0
+        count2 = ingredients_and_instructions.count(".")
+        if count1 <= count2:
+            for x in ingredients_and_instructions:
+                dot1 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1)
+                dot2 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1 + 1)
+                if len(ingredients_and_instructions[:dot2]) - len(ingredients_and_instructions[:dot1]) > 125:
+                    sentence = ingredients_and_instructions.replace(ingredients_and_instructions[:dot1], "").replace(
+                        ingredients_and_instructions[dot2:], "")
+                    index = sentence.find(" ", sentence.find(" ") + 100)
+                    ingredients_and_instructions = ingredients_and_instructions[:index] + "\n" + ingredients_and_instructions[index:]
+                count1 += 1
 
-        if len(suffix) < 125:
+        ingredients_and_instructions_text = ctk.CTkLabel(recipe_frame, text=ingredients_and_instructions, font=("default", 12), justify="center")
+        ingredients_and_instructions_text.grid(column=0, padx=10, pady=10, sticky="nsew")
+
+        if len(suffix) < 75:
             suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center")
-            suffix_text.grid(rowspan=1, column=0, columnspan=4, padx=50, pady=10, sticky="nsew")
+            suffix_text.grid(column=0, padx=10, pady=10, sticky="nsew")
         else:
             suffix.find(".")
-            index = suffix.find(" ", suffix.find(" ") + 150)
+            index = suffix.find(" ", suffix.find(" ") + 100)
             suffix = suffix[:index] + "\n" + suffix[index:]
             suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center")
-            suffix_text.grid(rowspan=1, column=0, columnspan=4, padx=50, pady=10, sticky="nsew")
+            suffix_text.grid(column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
 
     else:
         generating_text.destroy()

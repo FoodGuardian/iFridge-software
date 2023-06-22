@@ -176,7 +176,7 @@ def product_scan():
     product_scan_window.rowconfigure(0, weight=1, uniform="a")
     product_scan_window.rowconfigure((1, 2, 3, 4, 5), weight=2, uniform="a")
 
-    back_button = ctk.CTkButton(product_scan_window, text="Terug", command=lambda: product_scan_window.destroy())
+    back_button = ctk.CTkButton(product_scan_window, text="Terug", command=lambda: exit_product_scan())
     back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
     scan_title = ctk.CTkLabel(product_scan_window, text="Product scannen", font=("default", 32))
@@ -211,6 +211,13 @@ def product_scan():
 
     product_scan_window.mainloop()
 
+def exit_product_scan():
+    global vs
+    global product_scan_window
+
+    vs.stop()
+    product_scan_window.destroy()
+
 
 def plus_amount():
     global amount
@@ -235,11 +242,12 @@ def scan_product():
     global response
     global url
     global scanning
+    global vs
+    result.configure(text="Scanning...")
     if not scanning:
         vs = VideoStream(usePiCamera=True).start()
         time.sleep(2.0)
         scanning = True
-        result.configure(text="Scanning...")
         while scanning:
             frame = vs.read()
             frame = imutils.resize(frame, width=400)
@@ -250,6 +258,7 @@ def scan_product():
                 if (barcode_data != None):
                     scanning = False
                     play(AudioSegment.from_mp3("ifridge.mp3"))
+                    result.configure(text="Barcode gevonden")
         vs.stop()
         result.configure(text="Product zoeken...")
         url = "https://world.openfoodfacts.org/api/v0/product/" + barcode_data + ".json"

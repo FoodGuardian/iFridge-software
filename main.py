@@ -4,6 +4,7 @@ import os
 import subprocess
 import threading
 import time
+import tkinter
 from datetime import datetime
 import customtkinter as ctk
 import imutils
@@ -606,6 +607,7 @@ def recipes():
     recipes_window = Window()
     global dropdown
     global products
+    global recipe_frame
 
     products = []
 
@@ -619,6 +621,22 @@ def recipes():
 
     list_title = ctk.CTkLabel(recipes_window, text="Recepten Maker", font=("default", 32))
     list_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20)
+
+    main_frame = ctk.CTkFrame(master=recipes_window)
+    main_frame.grid(column=0, columnspan=4, row=5, rowspan=7, sticky="nsew")
+
+    recipe_canvas = ctk.CTkCanvas(master=main_frame)
+    recipe_canvas.pack(side="left", fill="both", expand=1)
+
+    scrollbar = ctk.CTkScrollbar(main_frame, orientation="vertical", command=recipe_canvas.yview, width=45)
+    scrollbar.pack(side="right", fill="y")
+
+    recipe_canvas.configure(yscrollcommand=scrollbar.set)
+    recipe_canvas.bind('<Configure>', lambda e: recipe_canvas.configure(scrollregion=recipe_canvas.bbox("all")))
+
+    recipe_frame = ctk.CTkFrame(master=recipe_canvas)
+
+    recipe_canvas.create_window((0, 0), window=recipe_frame, anchor="nw")
 
     #A connection to the database, all products are pulled from the database and put in the list 'products'.
     try:
@@ -649,6 +667,7 @@ def recipes():
 
 
 def generate_recipe():
+    global recipe_frame
 
     generating_text = ctk.CTkLabel(recipes_window, text="Recept aan het genereren ", font=("default", 24), justify="center")
     generating_text.grid(row=6, column=1, columnspan=2, padx=10, pady=10)
@@ -675,18 +694,19 @@ def generate_recipe():
         recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 14), justify="center")
         recipe_title_text.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
 
-        ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center", width=50)
-        ingredients_and_instructions_text.grid(row=5, rowspan=6, column=0, columnspan=4, padx=10, pady=10)
+        ingredients_and_instructions_text = ctk.CTkLabel(recipe_frame, text=ingredients_and_instructions, font=("default", 12), justify="center", width=50)
+        ingredients_and_instructions_text.grid(rowspan=6, column=0, columnspan=4, padx=50, pady=10, sticky="nsew")
 
         if len(suffix) < 125:
-            suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
-            suffix_text.grid(row=11, rowspan=1, column=0, columnspan=4, padx=10, pady=10)
+            suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center")
+            suffix_text.grid(rowspan=1, column=0, columnspan=4, padx=50, pady=10, sticky="nsew")
         else:
             suffix.find(".")
             index = suffix.find(" ", suffix.find(" ") + 150)
             suffix = suffix[:index] + "\n" + suffix[index:]
-            suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
-            suffix_text.grid(row=11, rowspan=1, column=0, columnspan=4, padx=10, pady=10)
+            suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center")
+            suffix_text.grid(rowspan=1, column=0, columnspan=4, padx=50, pady=10, sticky="nsew")
+
     else:
         generating_text.destroy()
         error_message = ctk.CTkLabel(recipes_window, text="Er is iets mis gegaan.", font=("default", 24))

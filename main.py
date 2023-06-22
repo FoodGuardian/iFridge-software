@@ -608,6 +608,7 @@ def recipes():
     global dropdown
     global products
     global recipe_frame
+    global recipe_canvas
 
     products = []
 
@@ -627,12 +628,6 @@ def recipes():
 
     recipe_canvas = ctk.CTkCanvas(master=main_frame)
     recipe_canvas.pack(side="left", fill="both", expand=1)
-
-    scrollbar = ctk.CTkScrollbar(main_frame, orientation="vertical", command=recipe_canvas.yview, width=45)
-    scrollbar.pack(side="right", fill="y")
-
-    recipe_canvas.configure(yscrollcommand=scrollbar.set)
-    recipe_canvas.bind('<Configure>', lambda e: recipe_canvas.configure(scrollregion=recipe_canvas.bbox("all")))
 
     recipe_frame = ctk.CTkFrame(master=recipe_canvas)
 
@@ -668,6 +663,7 @@ def recipes():
 
 def generate_recipe():
     global recipe_frame
+    global recipe_canvas
 
     generating_text = ctk.CTkLabel(recipes_window, text="Recept aan het genereren ", font=("default", 24), justify="center")
     generating_text.grid(row=6, column=1, columnspan=2, padx=10, pady=10)
@@ -719,6 +715,13 @@ def generate_recipe():
             suffix = suffix[:index] + "\n" + suffix[index:]
             suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center")
             suffix_text.grid(column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+            
+        scrollbar = ctk.CTkScrollbar(main_frame, orientation="vertical", command=recipe_canvas.yview, width=45)
+        scrollbar.pack(side="right", fill="y")
+
+        recipe_canvas.configure(yscrollcommand=scrollbar.set)
+        recipe_canvas.bind('<Configure>', lambda e: recipe_canvas.configure(scrollregion=recipe_canvas.bbox("all")))
+
 
     else:
         generating_text.destroy()

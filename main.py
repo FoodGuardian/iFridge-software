@@ -568,9 +568,9 @@ def wifi_settings():
     ssid_entry.bind("<1>", handle_click)
     pswd_entry.bind("<1>", handle_click)
 
-    button2 = ctk.CTkButton(wifi_window, text="Opslaan", font=("default", 24),
+    button2 = ctk.CTkButton(wifi_window, text="Opslaan en restart", font=("default", 24),
                             command=lambda: threading.Thread(target=save_wifi).start())
-    button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=2)
+    button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=3)
 
     wifi_window.mainloop()
 

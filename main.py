@@ -166,6 +166,8 @@ def product_scan():
     global amount
     global amount_label
     global cal
+    global scanning
+    scanning = False
     amount = 1
     product_scan_window = Window()
 
@@ -174,7 +176,7 @@ def product_scan():
     product_scan_window.rowconfigure(0, weight=1, uniform="a")
     product_scan_window.rowconfigure((1, 2, 3, 4, 5), weight=2, uniform="a")
 
-    back_button = ctk.CTkButton(product_scan_window, text="Terug", command=lambda: product_scan_window.destroy())
+    back_button = ctk.CTkButton(product_scan_window, text="Terug", command=lambda: exit_product_scan())
     back_button.grid(row=0, column=0, sticky="nw", padx=5, pady=5)
 
     scan_title = ctk.CTkLabel(product_scan_window, text="Product scannen", font=("default", 32))
@@ -209,6 +211,13 @@ def product_scan():
 
     product_scan_window.mainloop()
 
+def exit_product_scan():
+    global vs
+    global product_scan_window
+
+    vs.stop()
+    product_scan_window.destroy()
+
 
 def plus_amount():
     global amount
@@ -232,37 +241,43 @@ def scan_product():
     global response_array
     global response
     global url
-    vs = VideoStream(usePiCamera=True).start()
-    time.sleep(2.0)
-    scanning = True
+    global scanning
+    global vs
     result.configure(text="Scanning...")
-    while scanning:
-        frame = vs.read()
-        frame = imutils.resize(frame, width=400)
-        barcodes = pyzbar.decode(frame)
-        for barcode in barcodes:
-            barcode_data = barcode.data.decode("utf-8")
-            print(barcode_data)
-            if (barcode_data != None):
-                scanning = False
-                play(AudioSegment.from_mp3("bleep.mp3"))
-    vs.stop()
-    result.configure(text="Product zoeken...")
-    url = "https://world.openfoodfacts.org/api/v0/product/" + barcode_data + ".json"
-    get_response()
-    response_array = json.loads(response)
-    print(response_array)
-    print(response_array['status'])
-    if response_array['status'] == 1:
-        print("Product gevonden")
-        print(response_array['product']['brands'])
-        print(response_array['product']['product_name'])
-        text = response_array['product']['brands'] + " " + response_array['product']['product_name']
-        result.configure(text=text)
-    else:
-        print("Product niet gevonden")
-        text = barcode_data + " product niet gevonden"
-        result.configure(text=text)
+    if not scanning:
+        vs = VideoStream(usePiCamera=True).start()
+        time.sleep(2.0)
+        scanning = True
+        while scanning:
+            frame = vs.read()
+            frame = imutils.resize(frame, width=400)
+            barcodes = pyzbar.decode(frame)
+            for barcode in barcodes:
+                barcode_data = barcode.data.decode("utf-8")
+                print(barcode_data)
+                if (barcode_data != None):
+                    scanning = False
+                    play(AudioSegment.from_mp3("ifridge.mp3"))
+                    result.configure(text="Barcode gevonden")
+        vs.stop()
+        result.configure(text="Product zoeken...")
+        url = "https://world.openfoodfacts.org/api/v0/product/" + barcode_data + ".json"
+        get_response()
+        response_array = json.loads(response)
+        print(response_array)
+        print(response_array['status'])
+        if response_array['status'] == 1:
+            print("Product gevonden")
+            print(response_array['product']['brands'])
+            print(response_array['product']['product_name'])
+            text = response_array['product']['brands'] + " " + response_array['product']['product_name']
+            result.configure(text=text)
+            scanning = False
+        else:
+            print("Product niet gevonden")
+            text = barcode_data + " product niet gevonden"
+            result.configure(text=text)
+            scanning = False
 
 
 def get_response():
@@ -404,28 +419,32 @@ def insert_product():
     global amount
     global cal
 
+    selected_datetime = datetime.combine(cal.selection_get(), datetime.min.time())
     if response_array['status'] == 1:
-        try:
-            cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
-            cursor = cnx.cursor()
-            add_product = ("INSERT IGNORE INTO Product"
-                          "(Productcode, Brand, Name)"
-                          "VALUES (%s, %s, %s)")
-            product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
-            cursor.execute(add_product, product_data)
-            add_item = ("INSERT INTO Item"
-                       "(Productcode, ExpirationDate, Amount)"
-                       "VALUES (%s, %s, %s)")
-            expiration_date = cal.selection_get()
-            item_data = (barcode_data, expiration_date, amount)
-            cursor.execute(add_item, item_data)
-            cnx.commit()
-            cursor.close()
-            cnx.close()
-            result.configure(text="Product toegevoegd")
+        if selected_datetime > datetime.now():
+            try:
+                cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
+                cursor = cnx.cursor()
+                add_product = ("INSERT IGNORE INTO Product"
+                              "(Productcode, Brand, Name)"
+                              "VALUES (%s, %s, %s)")
+                product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
+                cursor.execute(add_product, product_data)
+                add_item = ("INSERT INTO Item"
+                           "(Productcode, ExpirationDate, Amount)"
+                           "VALUES (%s, %s, %s)")
+                expiration_date = cal.selection_get()
+                item_data = (barcode_data, expiration_date, amount)
+                cursor.execute(add_item, item_data)
+                cnx.commit()
+                cursor.close()
+                cnx.close()
+                result.configure(text="Product toegevoegd")
 
-        except mysql.connector.Error as err:
-            print(err)
+            except mysql.connector.Error as err:
+                print(err)
+        else:
+            result.configure(text="Verkeerde datum ingevuld")
 
 
 def product_list():
@@ -472,6 +491,9 @@ def product_list():
             product_row_count += 1
     except mysql.connector.Error as err:
         print(err)
+
+    expand_label = ctk.CTkLabel(product_frame, text=" ", height=250)
+    expand_label.grid(row=product_row_count, pady=10, padx=30, sticky="nsew")
 
     product_list_window.mainloop()
 
@@ -549,9 +571,6 @@ def wifi_settings():
                             command=lambda: threading.Thread(target=save_wifi).start())
     button2.grid(row=6, column=3, sticky="es", padx=20, pady=10, columnspan=2)
 
-    wifi_result = ctk.CTkLabel(wifi_window, text="Result: ", font=("default", 24))
-    wifi_result.grid(row=0, column=3, sticky="new", padx=20, pady=10, columnspan=2)
-
     wifi_window.mainloop()
 
 def close_wifi():
@@ -580,7 +599,6 @@ def save_wifi():
         wifi.write(config)
 
     os.popen("sudo reboot")
-    wifi_result.configure(text="WIFI opgeslagen")
 
 
 def recipes():

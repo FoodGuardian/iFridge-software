@@ -631,6 +631,10 @@ def recipes():
 
 
 def generate_recipe():
+
+    generating_text = ctk.CTkLabel(recipes_window, text="Recept aan het genereren ", font=("default", 24), justify="center")
+    generating_text.grid(row=6, column=1, columnspan=2, padx=10, pady=10)
+
     #The ingredient/product that is selected in the dropdown menu.
     main_ingredient = str(dropdown.get())
 
@@ -640,33 +644,20 @@ def generate_recipe():
         response = requests.post("http://ifridge.local/recipe", data={"mainIngredient": main_ingredient, "ingredients": products})
         recipe_title = response.json()["prefix"].replace("Recept: ", "")
         suffix = response.json()["suffix"].replace("Opmerking: ", "")
-        ingredients_and_instructions = response.text.replace("Opmerking: " + suffix, "").replace('"', "").replace(
-            "Recept: " + recipe_title, "").replace("[", "").replace("instructions:", "Instructie:").replace(
-            "ingredients:", "Ingredienten:").replace("],", "").replace("prefix:", "").replace("u00b0", "˚").replace(
-            "u00e9", "ë").replace("suffix:", "").replace("{", "").replace("}", "").replace(".,", ".").replace(" , ", "").replace(
-            recipe_title, "").replace(suffix, "").replace("Geniet van je smaakvolle ! ", "")
+        ingredients = "\n".join(response.json()["ingredients"])
+        instructions = "\n".join(response.json()["instructions"])
+        ingredients_and_instructions = ingredients + "\n" + "\n" + instructions
         recipe_check = True
     except requests.exceptions.ConnectionError:
         recipe_check = False
 
     #A check to make sure that there was a connection made to the api and everything went right in the api.
     if recipe_check:
+        generating_text.destroy()
         recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 14), justify="center")
         recipe_title_text.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
 
-        count1 = 0
-        count2 = ingredients_and_instructions.count(".")
-        if count1 <= count2:
-            for x in ingredients_and_instructions:
-                dot1 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1)
-                dot2 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1 + 1)
-                if len(ingredients_and_instructions[:dot2]) - len(ingredients_and_instructions[:dot1]) > 125:
-                    sentence = ingredients_and_instructions.replace(ingredients_and_instructions[:dot1], "").replace(ingredients_and_instructions[dot2:], "")
-                    index = sentence.find(" ", sentence.find(" ") + 12)
-                    ingredients_and_instructions = ingredients_and_instructions[:index] + "\n" + ingredients_and_instructions[index:]
-                count1 += 1
-
-        ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center")
+        ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center", width=50)
         ingredients_and_instructions_text.grid(row=5, rowspan=6, column=0, columnspan=4, padx=10, pady=10)
 
         if len(suffix) < 125:
@@ -674,11 +665,12 @@ def generate_recipe():
             suffix_text.grid(row=11, rowspan=1, column=0, columnspan=4, padx=10, pady=10)
         else:
             suffix.find(".")
-            index = suffix.find(".", suffix.find(".") + 1)
+            index = suffix.find(" ", suffix.find(" ") + 150)
             suffix = suffix[:index] + "\n" + suffix[index:]
             suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
             suffix_text.grid(row=11, rowspan=1, column=0, columnspan=4, padx=10, pady=10)
     else:
+        generating_text.destroy()
         error_message = ctk.CTkLabel(recipes_window, text="Er is iets mis gegaan.", font=("default", 24))
         error_message.grid(row=6, column=1, columnspan=2, padx=10, pady=10)
 

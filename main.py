@@ -657,7 +657,6 @@ def recipes():
 
 
 def generate_recipe():
-    global recipes_window
 
     #A text that indicates when a recipe is being generated.
     generating_text = ctk.CTkLabel(recipes_window, text="Recept aan het genereren ", font=("default", 24), justify="center")
@@ -673,8 +672,18 @@ def generate_recipe():
         recipe_title = response.json()["prefix"].replace("Recept: ", "")
         suffix = response.json()["suffix"].replace("Opmerking: ", "")
         ingredients = "\n".join(response.json()["ingredients"])
-        instructions = "\n".join(response.json()["instructions"])
+        instructions = response.json()["instructions"]
+        # A check that makes sure there aren't really long sentences.
+        count1 = 0
+        count2 = instructions.count(".")
+        if count1 <= count2:
+            for x in instructions:
+                if len(x) > 125:
+                    index = x.find(" ", x.find(" ") + 10)
+                    instructions[count1] = x[:index] + "\n" + x[index:]
+                count1 += 1
         recipe_check = True
+        instructions = "\n".join(instructions)
     except requests.exceptions.ConnectionError:
         recipe_check = False
 
@@ -686,25 +695,11 @@ def generate_recipe():
         recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 12), justify="center")
         recipe_title_text.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
 
-        #A check that makes sure there aren't really long sentences.
-        count1 = 0
-        count2 = instructions.count(".")
-        if count1 <= count2:
-            for x in instructions:
-                dot1 = instructions.find(".", instructions.find(".") + count1)
-                dot2 = instructions.find(".", instructions.find(".") + count1 + 1)
-                if len(instructions[:dot2]) - len(instructions[:dot1]) > 100:
-                    sentence = instructions.replace(instructions[:dot1], "").replace(
-                        instructions[dot2:], "")
-                    index = sentence.find(" ", sentence.find(" ") + 100)
-                    instructions = instructions[:index] + "\n" + instructions[index:]
-                count1 += 1
-
         #The ingredients and instructions are combined into one string.
         ingredients_and_instructions = ingredients + "\n" + "\n" + instructions
 
         #A check that makes it so when the ingredients and instruction are small they take less space.
-        if len(ingredients_and_instructions) > 750:
+        if len(ingredients_and_instructions) > 850:
             ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center")
             ingredients_and_instructions_text.grid(rowspan=6, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
         else:

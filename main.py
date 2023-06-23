@@ -275,7 +275,7 @@ def scan_product():
                 text = response_array['product']['brands'] + " " + response_array['product']['product_name']
                 result.configure(text=text)
                 scanning = False
-            except AttributeError:
+            except:
                 text = response_array['product']['product_name']
                 result.configure(text=text)
                 scanning = False
@@ -436,7 +436,7 @@ def insert_product():
                               "VALUES (%s, %s, %s)")
                 try:
                     product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
-                except AttributeError:
+                except:
                     product_data = (barcode_data, " ", response_array['product']['product_name'])
                 cursor.execute(add_product, product_data)
                 add_item = ("INSERT INTO Item"

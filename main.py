@@ -268,12 +268,17 @@ def scan_product():
         print(response_array)
         print(response_array['status'])
         if response_array['status'] == 1:
-            print("Product gevonden")
-            print(response_array['product']['brands'])
-            print(response_array['product']['product_name'])
-            text = response_array['product']['brands'] + " " + response_array['product']['product_name']
-            result.configure(text=text)
-            scanning = False
+            try:
+                print("Product gevonden")
+                print(response_array['product']['brands'])
+                print(response_array['product']['product_name'])
+                text = response_array['product']['brands'] + " " + response_array['product']['product_name']
+                result.configure(text=text)
+                scanning = False
+            except:
+                text = response_array['product']['product_name']
+                result.configure(text=text)
+                scanning = False
         else:
             print("Product niet gevonden")
             text = barcode_data + " product niet gevonden"
@@ -429,7 +434,10 @@ def insert_product():
                 add_product = ("INSERT IGNORE INTO Product"
                               "(Productcode, Brand, Name)"
                               "VALUES (%s, %s, %s)")
-                product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
+                try:
+                    product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
+                except:
+                    product_data = (barcode_data, " ", response_array['product']['product_name'])
                 cursor.execute(add_product, product_data)
                 add_item = ("INSERT INTO Item"
                            "(Productcode, ExpirationDate, Amount)"

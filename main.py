@@ -607,7 +607,6 @@ def recipes():
     recipes_window = Window()
     global dropdown
     global products
-    global recipe_frame
 
     products = []
 
@@ -622,22 +621,6 @@ def recipes():
     list_title = ctk.CTkLabel(recipes_window, text="Recepten Maker", font=("default", 32))
     list_title.grid(row=0, column=1, columnspan=2, sticky="new", padx=20)
 
-    main_frame = ctk.CTkFrame(master=recipes_window)
-    main_frame.grid(column=0, columnspan=4, row=5, rowspan=7, sticky="nsew")
-
-    recipe_canvas = ctk.CTkCanvas(master=main_frame)
-    recipe_canvas.pack(side="left", fill="both", expand=1)
-
-    scrollbar = ctk.CTkScrollbar(main_frame, orientation="vertical", command=recipe_canvas.yview, width=45)
-    scrollbar.pack(side="right", fill="y")
-
-    recipe_canvas.configure(yscrollcommand=scrollbar.set)
-    recipe_canvas.bind('<Configure>', lambda e: recipe_canvas.configure(scrollregion=recipe_canvas.bbox("all")))
-
-    recipe_frame = ctk.CTkFrame(master=recipe_canvas)
-
-    recipe_canvas.create_window((0, 0), window=recipe_frame, anchor="nw")
-
     #A connection to the database, all products are pulled from the database and put in the list 'products'.
     try:
         cnx = mysql.connector.connect(user='dbuser', password='Foodguardian', host='127.0.0.1', database='ifridge')
@@ -651,7 +634,6 @@ def recipes():
     except mysql.connector.Error as err:
         print(err)
 
-    #
     instruction = ctk.CTkLabel(recipes_window, text="Kies een product om een recept op te baseren", font=("default", 18), height=50)
     instruction.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
 
@@ -659,7 +641,7 @@ def recipes():
     dropdown = ctk.CTkOptionMenu(master=recipes_window, values=products)
     dropdown.grid(row=2, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
 
-    #The button witch when pressed threads to 'generate_recipe' and thus generates a recipe.
+    #The button witch when pressed threads to 'generate_recipe' and thus generates a recipe based on the selected product.
     generate_button = ctk.CTkButton(recipes_window, width=300, text="maak recept", command=lambda: threading.Thread(target=generate_recipe).start())
     generate_button.grid(row=3, column=1, columnspan=2, sticky="nsew", padx=10, pady=10)
 
@@ -667,8 +649,9 @@ def recipes():
 
 
 def generate_recipe():
-    global recipe_frame
+    global recipes_window
 
+    #A text that indicates when a recipe is being generated.
     generating_text = ctk.CTkLabel(recipes_window, text="Recept aan het genereren ", font=("default", 24), justify="center")
     generating_text.grid(row=6, column=1, columnspan=2, padx=10, pady=10)
 
@@ -683,7 +666,6 @@ def generate_recipe():
         suffix = response.json()["suffix"].replace("Opmerking: ", "")
         ingredients = "\n".join(response.json()["ingredients"])
         instructions = "\n".join(response.json()["instructions"])
-        ingredients_and_instructions = ingredients + "\n" + "\n" + instructions
         recipe_check = True
     except requests.exceptions.ConnectionError:
         recipe_check = False
@@ -691,36 +673,49 @@ def generate_recipe():
     #A check to make sure that there was a connection made to the api and everything went right in the api.
     if recipe_check:
         generating_text.destroy()
-        recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 14), justify="center")
+
+        #The title of the generated recipe.
+        recipe_title_text = ctk.CTkLabel(recipes_window, text=recipe_title, font=("default", 12), justify="center")
         recipe_title_text.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
 
+        #A check that makes sure there aren't really long sentences.
         count1 = 0
-        count2 = ingredients_and_instructions.count(".")
+        count2 = instructions.count(".")
         if count1 <= count2:
-            for x in ingredients_and_instructions:
-                dot1 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1)
-                dot2 = ingredients_and_instructions.find(".", ingredients_and_instructions.find(".") + count1 + 1)
-                if len(ingredients_and_instructions[:dot2]) - len(ingredients_and_instructions[:dot1]) > 125:
-                    sentence = ingredients_and_instructions.replace(ingredients_and_instructions[:dot1], "").replace(
-                        ingredients_and_instructions[dot2:], "")
+            for x in instructions:
+                dot1 = instructions.find(".", instructions.find(".") + count1)
+                dot2 = instructions.find(".", instructions.find(".") + count1 + 1)
+                if len(instructions[:dot2]) - len(instructions[:dot1]) > 100:
+                    sentence = instructions.replace(instructions[:dot1], "").replace(
+                        instructions[dot2:], "")
                     index = sentence.find(" ", sentence.find(" ") + 100)
-                    ingredients_and_instructions = ingredients_and_instructions[:index] + "\n" + ingredients_and_instructions[index:]
+                    instructions = instructions[:index] + "\n" + instructions[index:]
                 count1 += 1
 
-        ingredients_and_instructions_text = ctk.CTkLabel(recipe_frame, text=ingredients_and_instructions, font=("default", 12), justify="center", width="500")
-        ingredients_and_instructions_text.grid(column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        #The ingredients and instructions are combined into one string.
+        ingredients_and_instructions = ingredients + "\n" + "\n" + instructions
 
+        #A check that makes it so when the ingredients and instruction are small they take less space.
+        if len(ingredients_and_instructions) > 750:
+            ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center")
+            ingredients_and_instructions_text.grid(rowspan=6, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+        else:
+            ingredients_and_instructions_text = ctk.CTkLabel(recipes_window, text=ingredients_and_instructions, font=("default", 12), justify="center")
+            ingredients_and_instructions_text.grid(rowspan=4, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+
+        #A check that cuts up the string if its on the long side.
         if len(suffix) < 75:
-            suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center", width="500")
-            suffix_text.grid(column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+            suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
+            suffix_text.grid(rowspan=1, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
         else:
             suffix.find(".")
             index = suffix.find(" ", suffix.find(" ") + 100)
             suffix = suffix[:index] + "\n" + suffix[index:]
-            suffix_text = ctk.CTkLabel(recipe_frame, text=suffix, font=("default", 12), justify="center", width="500")
-            suffix_text.grid(column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+            suffix_text = ctk.CTkLabel(recipes_window, text=suffix, font=("default", 12), justify="center")
+            suffix_text.grid(rowspan=1, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
 
     else:
+        #The error meesage for if the connection wasn't good.
         generating_text.destroy()
         error_message = ctk.CTkLabel(recipes_window, text="Er is iets mis gegaan.", font=("default", 24))
         error_message.grid(row=6, column=1, columnspan=2, padx=10, pady=10)

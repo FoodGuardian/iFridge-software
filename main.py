@@ -268,14 +268,14 @@ def scan_product():
         print(response_array)
         print(response_array['status'])
         if response_array['status'] == 1:
-            if "brands" in response_array:
+            try:
                 print("Product gevonden")
                 print(response_array['product']['brands'])
                 print(response_array['product']['product_name'])
                 text = response_array['product']['brands'] + " " + response_array['product']['product_name']
                 result.configure(text=text)
                 scanning = False
-            else:
+            except AttributeError:
                 text = response_array['product']['product_name']
                 result.configure(text=text)
                 scanning = False
@@ -434,9 +434,9 @@ def insert_product():
                 add_product = ("INSERT IGNORE INTO Product"
                               "(Productcode, Brand, Name)"
                               "VALUES (%s, %s, %s)")
-                if "brands" in response_array:
+                try:
                     product_data = (barcode_data, response_array['product']['brands'], response_array['product']['product_name'])
-                else:
+                except AttributeError:
                     product_data = (barcode_data, " ", response_array['product']['product_name'])
                 cursor.execute(add_product, product_data)
                 add_item = ("INSERT INTO Item"
